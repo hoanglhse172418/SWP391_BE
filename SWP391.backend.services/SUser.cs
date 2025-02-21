@@ -135,6 +135,7 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
+                    Username = request.Username,
                     Email = request.Email,
                     Role = "user",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
@@ -218,6 +219,7 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
+                    Username = request.Username,
                     Email = request.Email,
                     Role = "staff",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
