@@ -6,10 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Builder.Extensions;
-using Microsoft.AspNetCore.Authentication.Google;
-using System.Security.Principal;
+
+using SWP391.backend.repository;
+using SWP391.backend.services;
 using SWP391.backend.repository.Models;
 
 
@@ -25,15 +24,15 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<swpContext>(op =>
-   op.UseSqlServer(builder.Configuration.GetConnectionString("exe")));
+   op.UseSqlServer(builder.Configuration.GetConnectionString("swp")));
 
 builder.Services.AddCors(p => p.AddPolicy("MyCors", build =>
 {
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
-//builder.Services.AddScoped<>();
 
+builder.Services.AddScoped<IUser, SUser>();
 
 // Swagger Configuration
 builder.Services.AddSwaggerGen(option =>
@@ -86,17 +85,17 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
-})
-// Thêm Cookie Authentication để xử lý việc lưu trữ thông tin đăng nhập sau khi xác thực Google OAuth thành công
-.AddCookie()
-// Thêm Google OAuth để xác thực qua Google
-.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
-{
-    options.ClientId = builder.Configuration["Oauth:ClientId"];
-    options.ClientSecret = builder.Configuration["Oauth:ClientSecret"];
-    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Sử dụng Cookie để lưu trữ sau khi SignIn với Google
-    options.SaveTokens = true;
 });
+//// Thêm Cookie Authentication để xử lý việc lưu trữ thông tin đăng nhập sau khi xác thực Google OAuth thành công
+//.AddCookie()
+//// Thêm Google OAuth để xác thực qua Google
+//.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+//{
+//    options.ClientId = builder.Configuration["Oauth:ClientId"];
+//    options.ClientSecret = builder.Configuration["Oauth:ClientSecret"];
+//    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Sử dụng Cookie để lưu trữ sau khi SignIn với Google
+//    options.SaveTokens = true;
+//});
 
 var app = builder.Build();
 

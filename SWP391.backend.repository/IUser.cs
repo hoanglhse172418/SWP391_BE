@@ -14,10 +14,13 @@ namespace SWP391.backend.repository
         Task<List<User>> GetAll(GetAllDTO request);
         Task<User> CreateUser(CreateUserDTO request);
         Task<User> CreateStaff(CreateUserDTO request);
+        Task<User> CreateDoctor(CreateUserDTO request);
         Task<User> Update(int id, UpdateUserDTO user);
         Task<User> GetByID(int id);
         Task<bool> Delete(int id);
         Task ForgotPassword(string email);
         Task ResetPassword(string token, string newPassword, string confirmPassword);
+        Task<string> Login(LoginDTO request);
+        Task<bool> Logout(string email);
     }
 }

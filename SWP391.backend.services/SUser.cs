@@ -19,6 +19,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -30,8 +31,6 @@ namespace SWP391.backend.services
     public class SUser : IUser
     {
         private readonly IConfiguration _configuration;
-
-        private const string FirebaseStorageBaseURL = "https://firebasestorage.googleapis.com/v0/b/unityhands-2b995.firebasestorage.app/o";
 
         private readonly swpContext context;
 
@@ -477,6 +476,72 @@ namespace SWP391.backend.services
 
                 throw new Exception(errorMessage);
             }
+        }
+
+        private string CreateToken(User user)
+        {
+            List<Claim> claims = new List<Claim>()
+            {
+                new Claim("Id", user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("Email", user.Email),
+            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                _configuration["Jwt:Issuer"],
+                _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(60),
+                signingCredentials: creds
+                );
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+            return jwt;
+        }
+
+        public async Task<string> Login(LoginDTO request)
+        {
+            try
+            {
+                // Retrieve the user based on the  email
+                var user = await this.context.Users
+                    .Where(x => x.Email.Equals(request.Email))
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                    throw new Exception("USER IS NOT FOUND");
+
+                // Check if the password is correct
+                if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+                    throw new Exception("INVALID PASSWORD");
+
+                this.context.Users.Update(user);
+                await this.context.SaveChangesAsync();
+
+                // Create and return token (or any other mechanism, since JWT is not being used)
+                var token = CreateToken(user); // Update this as per your token generation
+                return token;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"{ex.Message}");
+            }
+        }
+
+        public async Task<bool> Logout(string email)
+        {
+            var user = await  context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                return false;
+            }
+            user.LastLogin = DateTime.UtcNow;
+            this.context.Users.Update(user);
+            await this.context.SaveChangesAsync();
+            return true;
         }
     }
 }
