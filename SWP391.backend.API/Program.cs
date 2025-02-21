@@ -31,7 +31,7 @@ builder.Services.AddCors(p => p.AddPolicy("MyCors", build =>
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
-
+builder.Services.AddScoped<IChild, SChild>();
 builder.Services.AddScoped<IUser, SUser>();
 
 // Swagger Configuration
