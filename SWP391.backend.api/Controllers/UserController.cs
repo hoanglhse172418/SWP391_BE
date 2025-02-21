@@ -67,7 +67,7 @@ namespace SWP391.backend.api.Controllers
         }
        
         [AllowAnonymous]
-        [Route("create-staff")]
+        [Route("create-doctor")]
         [HttpPost]
         public async Task<IActionResult> CreateDoctor(CreateUserDTO user)
         {

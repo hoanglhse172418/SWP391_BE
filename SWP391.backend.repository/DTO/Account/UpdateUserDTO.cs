@@ -10,6 +10,5 @@ namespace SWP391.backend.repository.DTO.Account
     public class UpdateUserDTO
     {
         public string? Fullname { get; set; }
-        public DateTime? UpdatedAt { get; set; }
     }
 }
