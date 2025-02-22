@@ -38,8 +38,20 @@ namespace SWP391.backend.services
                         case "childrenfullname":
                             query = query.Where(c => c.ChildrenFullname != null && c.ChildrenFullname.Contains(request.FilterQuery));
                             break;
-                        case "parentfullname":
-                            query = query.Where(c => c.ParentFullname != null && c.ParentFullname.Contains(request.FilterQuery));
+                        case "fatherfullname":
+                            query = query.Where(c => c.FatherFullName != null && c.FatherFullName.Contains(request.FilterQuery));
+                            break;
+                        case "motherfullname":
+                            query = query.Where(c => c.MotherFullName != null && c.MotherFullName.Contains(request.FilterQuery));
+                            break;
+                        case "fatherphonenumber":
+                            query = query.Where(c => c.FatherPhoneNumber != null && c.FatherPhoneNumber.Contains(request.FilterQuery));
+                            break;
+                        case "motherphonenumber":
+                            query = query.Where(c => c.MotherPhoneNumber != null && c.MotherPhoneNumber.Contains(request.FilterQuery));
+                            break;
+                        case "address":
+                            query = query.Where(c => c.Address != null && c.Address.Contains(request.FilterQuery));
                             break;
                         case "gender":
                             query = query.Where(c => c.Gender != null && c.Gender.Equals(request.FilterQuery, StringComparison.OrdinalIgnoreCase));
@@ -68,7 +80,11 @@ namespace SWP391.backend.services
                     query = request.SortBy.ToLower() switch
                     {
                         "childrenfullname" => isAscending ? query.OrderBy(c => c.ChildrenFullname) : query.OrderByDescending(c => c.ChildrenFullname),
-                        "parentfullname" => isAscending ? query.OrderBy(c => c.ParentFullname) : query.OrderByDescending(c => c.ParentFullname),
+                        "fatherfullname" => isAscending ? query.OrderBy(c => c.FatherFullName) : query.OrderByDescending(c => c.FatherFullName),
+                        "motherfullname" => isAscending ? query.OrderBy(c => c.MotherFullName) : query.OrderByDescending(c => c.MotherFullName),
+                        "fatherphonenumber" => isAscending ? query.OrderBy(c => c.FatherPhoneNumber) : query.OrderByDescending(c => c.FatherPhoneNumber),
+                        "motherphonenumber" => isAscending ? query.OrderBy(c => c.MotherPhoneNumber) : query.OrderByDescending(c => c.MotherPhoneNumber),
+                        "address" => isAscending ? query.OrderBy(c => c.Address) : query.OrderByDescending(c => c.Address),
                         "gender" => isAscending ? query.OrderBy(c => c.Gender) : query.OrderByDescending(c => c.Gender),
                         "dob" => isAscending ? query.OrderBy(c => c.Dob) : query.OrderByDescending(c => c.Dob),
                         "createdat" => isAscending ? query.OrderBy(c => c.CreatedAt) : query.OrderByDescending(c => c.CreatedAt),
@@ -100,11 +116,14 @@ namespace SWP391.backend.services
                 {
                     UserId = request.UserId,
                     ChildrenFullname = request.ChildrenFullname,
-                    ParentFullname = request.ParentFullname,
                     Dob = request.Dob,
                     Gender = request.Gender,
+                    FatherFullName = request.FatherFullName,
+                    MotherFullName = request.MotherFullName,
+                    FatherPhoneNumber = request.FatherPhoneNumber,
+                    MotherPhoneNumber = request.MotherPhoneNumber,
+                    Address = request.Address,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
                 };
 
                 // Add Child to the database
@@ -115,8 +134,7 @@ namespace SWP391.backend.services
                 var vaccinationProfile = new VaccinationProfile
                 {
                     ChildrenId = child.Id,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 context.VaccinationProfiles.Add(vaccinationProfile);
@@ -158,9 +176,13 @@ namespace SWP391.backend.services
 
                 // Update child details
                 child.ChildrenFullname = request.ChildrenFullname ?? child.ChildrenFullname;
-                child.ParentFullname = request.ParentFullname ?? child.ParentFullname;
                 child.Dob = request.Dob ?? child.Dob;
                 child.Gender = request.Gender ?? child.Gender;
+                child.FatherFullName = request.FatherFullName ?? child.FatherFullName;
+                child.MotherFullName = request.MotherFullName ?? child.MotherFullName;
+                child.FatherPhoneNumber = request.FatherPhoneNumber ?? child.FatherPhoneNumber;
+                child.MotherPhoneNumber = request.MotherPhoneNumber ?? child.MotherPhoneNumber;
+                child.Address = request.Address ?? child.Address;
                 child.UpdatedAt = DateTime.UtcNow;
 
                 // Update Vaccination Profile (if needed)
