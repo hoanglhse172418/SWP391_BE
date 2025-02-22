@@ -32,6 +32,7 @@ builder.Services.AddCors(p => p.AddPolicy("MyCors", build =>
 }));
 
 builder.Services.AddScoped<IChild, SChild>();
+builder.Services.AddScoped<IDisease, SDisease>();
 builder.Services.AddScoped<IUser, SUser>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
 
