@@ -103,6 +103,10 @@ namespace SWP391.backend.repository.Models
             {
                 entity.Property(e => e.Id).HasColumnName("id");
 
+                entity.Property(e => e.Address)
+                    .HasMaxLength(225)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.ChildrenFullname)
                     .HasMaxLength(255)
                     .HasColumnName("children_fullname");
@@ -116,13 +120,25 @@ namespace SWP391.backend.repository.Models
                     .HasColumnType("date")
                     .HasColumnName("dob");
 
+                entity.Property(e => e.FatherFullName)
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.FatherPhoneNumber)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.Gender)
                     .HasMaxLength(10)
                     .HasColumnName("gender");
 
-                entity.Property(e => e.ParentFullname)
+                entity.Property(e => e.MotherFullName)
                     .HasMaxLength(255)
-                    .HasColumnName("parent_fullname");
+                    .IsUnicode(false);
+
+                entity.Property(e => e.MotherPhoneNumber)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.UpdatedAt)
                     .HasColumnType("datetime")

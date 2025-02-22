@@ -11,11 +11,15 @@ namespace SWP391.backend.repository.DTO.Child
         public int Id { get; set; }
         public int? UserId { get; set; }
         public string? ChildrenFullname { get; set; }
-        public string? ParentFullname { get; set; }
         public DateTime? Dob { get; set; }
         public string? Gender { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public string? FatherFullName { get; set; }
+        public string? MotherFullName { get; set; }
+        public string? FatherPhoneNumber { get; set; }
+        public string? MotherPhoneNumber { get; set; }
+        public string? Address { get; set; }
         public List<VaccinationProfileDTO> VaccinationProfiles { get; set; } = new();
     }
 
