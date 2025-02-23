@@ -46,6 +46,7 @@ namespace SWP391.backend.repository.Models
                 .AddJsonFile("appsettings.json", true, true).Build();
             return configuration["ConnectionStrings:swp"];
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Appointment>(entity =>
@@ -103,9 +104,7 @@ namespace SWP391.backend.repository.Models
             {
                 entity.Property(e => e.Id).HasColumnName("id");
 
-                entity.Property(e => e.Address)
-                    .HasMaxLength(225)
-                    .IsUnicode(false);
+                entity.Property(e => e.Address).HasMaxLength(255);
 
                 entity.Property(e => e.ChildrenFullname)
                     .HasMaxLength(255)
@@ -120,9 +119,7 @@ namespace SWP391.backend.repository.Models
                     .HasColumnType("date")
                     .HasColumnName("dob");
 
-                entity.Property(e => e.FatherFullName)
-                    .HasMaxLength(255)
-                    .IsUnicode(false);
+                entity.Property(e => e.FatherFullName).HasMaxLength(255);
 
                 entity.Property(e => e.FatherPhoneNumber)
                     .HasMaxLength(20)
@@ -132,9 +129,7 @@ namespace SWP391.backend.repository.Models
                     .HasMaxLength(10)
                     .HasColumnName("gender");
 
-                entity.Property(e => e.MotherFullName)
-                    .HasMaxLength(255)
-                    .IsUnicode(false);
+                entity.Property(e => e.MotherFullName).HasMaxLength(255);
 
                 entity.Property(e => e.MotherPhoneNumber)
                     .HasMaxLength(20)
@@ -380,6 +375,8 @@ namespace SWP391.backend.repository.Models
                     .HasColumnName("name");
 
                 entity.Property(e => e.Notes).HasColumnName("notes");
+
+                entity.Property(e => e.Price).HasMaxLength(255);
 
                 entity.Property(e => e.RecAgeEnd).HasColumnName("rec_age_end");
 

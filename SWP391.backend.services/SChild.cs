@@ -35,6 +35,10 @@ namespace SWP391.backend.services
                 {
                     switch (request.FilterOn.ToLower())
                     {
+                        case "UserId":
+                            if (int.TryParse(request.FilterQuery, out var userId))
+                                query = query.Where(c => c.UserId == userId);
+                            break;
                         case "childrenfullname":
                             query = query.Where(c => c.ChildrenFullname != null && c.ChildrenFullname.Contains(request.FilterQuery));
                             break;
@@ -110,59 +114,40 @@ namespace SWP391.backend.services
 
         public async Task<Child> Create(CreateChildDTO request)
         {
-            try
+            var child = new Child
             {
-                var child = new Child
-                {
-                    UserId = request.UserId,
-                    ChildrenFullname = request.ChildrenFullname,
-                    Dob = request.Dob,
-                    Gender = request.Gender,
-                    FatherFullName = request.FatherFullName,
-                    MotherFullName = request.MotherFullName,
-                    FatherPhoneNumber = request.FatherPhoneNumber,
-                    MotherPhoneNumber = request.MotherPhoneNumber,
-                    Address = request.Address,
-                    CreatedAt = DateTime.UtcNow,
-                };
+                UserId = request.UserId,
+                ChildrenFullname = request.ChildrenFullname,
+                Dob = request.Dob,
+                Gender = request.Gender,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                FatherFullName = request.FatherFullName,
+                MotherFullName = request.MotherFullName,
+                FatherPhoneNumber = request.FatherPhoneNumber,
+                MotherPhoneNumber = request.MotherPhoneNumber,
+                Address = request.Address
+            };
 
-                // Add Child to the database
-                context.Children.Add(child);
-                await context.SaveChangesAsync(); // Ensure child ID is generated
+            // Add child to database
+            context.Children.Add(child);
+            await context.SaveChangesAsync();
 
-                // Create Vaccination Profile
-                var vaccinationProfile = new VaccinationProfile
-                {
-                    ChildrenId = child.Id,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                context.VaccinationProfiles.Add(vaccinationProfile);
-                await context.SaveChangesAsync(); // Ensure vaccinationProfile ID is generated
-
-                // Create Vaccination Details (Assuming default vaccines are needed)
-                var vaccinationDetails = request.VaccinationDetails.Select(detail => new VaccinationDetail
-                {
-                    VaccinationProfileId = vaccinationProfile.Id,
-                    DiseaseId = detail.DiseaseId,
-                    VaccineId = detail.VaccineId,
-                    ExpectedInjectionDate = detail.ExpectedInjectionDate,
-                    ActualInjectionDate = null // Injection has not been administered yet
-                }).ToList();
-
-                if (vaccinationDetails.Any())
-                {
-                    context.VaccinationDetails.AddRange(vaccinationDetails);
-                    await context.SaveChangesAsync();
-                }
-
-                return child;
-            }
-            catch (Exception ex)
+            // Create a VaccinationProfile linked to the newly created child
+            var vaccinationProfile = new VaccinationProfile
             {
-                throw new Exception($"Error creating child: {ex.Message}", ex);
-            }
+                ChildrenId = child.Id,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Add VaccinationProfile to database
+            context.VaccinationProfiles.Add(vaccinationProfile);
+            await context.SaveChangesAsync();
+
+            return child;
         }
+
 
         public async Task<Child> Update(int Id, UpdateChildDTO request)
         {
