@@ -45,10 +45,13 @@ cloudinary.Api.Secure = true;
 builder.Services.AddScoped<IChild, SChild>();
 builder.Services.AddScoped<IDisease, SDisease>();
 builder.Services.AddScoped<IUser, SUser>();
+builder.Services.AddScoped<IVaccinationDetail, SVaccinationDetail>();
 builder.Services.AddScoped<IVaccinationProfile, SVaccinationProfile>();
-builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
 builder.Services.AddScoped<IVaccine, SVaccine>();
 builder.Services.AddScoped<IVaccinePackage, SVaccinePackage>();
+builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
+
+
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddScoped<SCloudinary>();
 
