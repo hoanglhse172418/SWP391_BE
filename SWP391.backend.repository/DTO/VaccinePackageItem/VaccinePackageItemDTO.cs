@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,6 @@ namespace SWP391.backend.repository.DTO.VaccinePackageItem
     {
         public int VaccineId { get; set; }
         public int DoseNumber { get; set; }
-        public decimal PricePerDose { get; set; }
+
     }
 }

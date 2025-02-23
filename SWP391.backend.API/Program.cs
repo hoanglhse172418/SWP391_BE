@@ -47,6 +47,7 @@ builder.Services.AddScoped<IDisease, SDisease>();
 builder.Services.AddScoped<IUser, SUser>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
 builder.Services.AddScoped<IVaccine, SVaccine>();
+builder.Services.AddScoped<IVaccinePackage, SVaccinePackage>();
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddScoped<SCloudinary>();
 
