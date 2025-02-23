@@ -2,6 +2,7 @@
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO;
 using SWP391.backend.repository.DTO.Vaccine;
+using SWP391.backend.services;
 
 namespace SWP391.backend.api.Controllers
 {
@@ -10,10 +11,12 @@ namespace SWP391.backend.api.Controllers
     public class VaccineController : ControllerBase
     {
         private readonly IVaccine v;
+        private readonly SCloudinary _cloudinary;
 
-        public VaccineController(IVaccine v)
+        public VaccineController(IVaccine v, SCloudinary cloudinary)
         {
             this.v = v;
+            _cloudinary = cloudinary;
         }
 
         [HttpGet]
@@ -30,11 +33,16 @@ namespace SWP391.backend.api.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> Create(CreateVaccineDTO vaccine)
+        public async Task<IActionResult> Create([FromForm]CreateVaccineDTO vaccine)
         {
             try
             {
-                var v = await this.v.Create(vaccine);
+                string imageUrl = null;
+                if (vaccine.ImageFile != null) 
+                { 
+                    imageUrl = await _cloudinary.UploadImageAsync(vaccine.ImageFile);
+                }
+                var v = await this.v.Create(vaccine, imageUrl);
                 return Ok(v);
             }
             catch (Exception ex)
@@ -45,11 +53,16 @@ namespace SWP391.backend.api.Controllers
 
         [HttpPut]
         [Route("update/{Id}")]
-        public async Task<IActionResult> Update(int Id, UpdateVaccineDTO vaccine)
+        public async Task<IActionResult> Update(int Id, [FromForm]UpdateVaccineDTO vaccine, IFormFile imageFile)
         {
             try
             {
-                var v = await this.v.Update(Id, vaccine);
+                string? imageUrl = null;
+                if(imageFile != null)
+                {
+                    imageUrl = await _cloudinary.UploadImageAsync(imageFile);
+                }
+                var v = await this.v.Update(Id, vaccine, imageUrl);
                 return Ok(v);
             }
             catch (Exception ex)

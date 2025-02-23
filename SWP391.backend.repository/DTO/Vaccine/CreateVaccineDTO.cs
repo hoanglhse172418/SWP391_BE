@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace SWP391.backend.repository.DTO.Vaccine
         public string? VaccineName { get; set; }
         public string? Manufacture { get; set; }
         public string? Description { get; set; }
-        public string? ImageUrl { get; set; }
+        public IFormFile? ImageFile { get; set; }
         public int? RecAgeStart { get; set; }
         public int? RecAgeEnd { get; set; }
         public int? InStockNumber { get; set; }
