@@ -17,6 +17,5 @@ namespace SWP391.backend.repository.DTO.Child
         public string? FatherPhoneNumber { get; set; }
         public string? MotherPhoneNumber { get; set; }
         public string? Address { get; set; }
-        public List<VaccinationDetailDTO> VaccinationDetails { get; set; } = new List<VaccinationDetailDTO>();
     }
 }
