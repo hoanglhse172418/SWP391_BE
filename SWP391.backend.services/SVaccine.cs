@@ -49,6 +49,7 @@ namespace SWP391.backend.services
                     RecAgeStart = request.RecAgeStart,
                     RecAgeEnd = request.RecAgeEnd,
                     InStockNumber = request.InStockNumber,
+                    Price = request.Price,
                     Notes = request.Notes,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -79,6 +80,8 @@ namespace SWP391.backend.services
                 foundVaccine.RecAgeStart = string.IsNullOrEmpty(request.RecAgeStart.ToString()) ? foundVaccine.RecAgeStart : request.RecAgeStart;
                 foundVaccine.RecAgeEnd = string.IsNullOrEmpty(request.RecAgeEnd.ToString()) ? foundVaccine.RecAgeEnd : request.RecAgeEnd;
                 foundVaccine.Notes = string.IsNullOrEmpty(request.Notes) ? foundVaccine.Notes : request.Notes;
+                foundVaccine.InStockNumber = string.IsNullOrEmpty(request.InStockNumber.ToString()) ? foundVaccine.InStockNumber : request.InStockNumber;
+                foundVaccine.Price = string.IsNullOrEmpty(request.Price) ? foundVaccine.Price : request.Price;
                 foundVaccine.UpdatedAt = DateTime.UtcNow;
 
                 await context.SaveChangesAsync();

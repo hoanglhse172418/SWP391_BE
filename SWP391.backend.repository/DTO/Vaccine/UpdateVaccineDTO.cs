@@ -15,6 +15,7 @@ namespace SWP391.backend.repository.DTO.Vaccine
         public int? RecAgeStart { get; set; }
         public int? RecAgeEnd { get; set; }
         public int? InStockNumber { get; set; }
+        public string? Price { get; set; }
         public string? Notes { get; set; }
     }
 }
