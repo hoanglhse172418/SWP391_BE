@@ -61,5 +61,33 @@ namespace SWP391.backend.services
                 throw new Exception($"Error create vaccine: {ex.Message}", ex);
             }
         }
+
+        public async Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request)
+        {
+            try
+            {
+                var foundVaccine = await context.Vaccines.FindAsync(vaccineId);
+                if(foundVaccine == null)
+                {
+                    throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
+                }
+
+                foundVaccine.Name = string.IsNullOrEmpty(request.VaccineName) ? foundVaccine.Name : request.VaccineName;
+                foundVaccine.Manufacture = string.IsNullOrEmpty(request.Manufacture) ? foundVaccine.Manufacture : request.Manufacture;
+                foundVaccine.Description = string.IsNullOrEmpty(request.Description) ? foundVaccine.Description : request.Description;
+                foundVaccine.ImageUrl = string.IsNullOrEmpty(request.ImageUrl) ? foundVaccine.ImageUrl : request.ImageUrl;
+                foundVaccine.RecAgeStart = string.IsNullOrEmpty(request.RecAgeStart.ToString()) ? foundVaccine.RecAgeStart : request.RecAgeStart;
+                foundVaccine.RecAgeEnd = string.IsNullOrEmpty(request.RecAgeEnd.ToString()) ? foundVaccine.RecAgeEnd : request.RecAgeEnd;
+                foundVaccine.Notes = string.IsNullOrEmpty(request.Notes) ? foundVaccine.Notes : request.Notes;
+                foundVaccine.UpdatedAt = DateTime.UtcNow;
+
+                await context.SaveChangesAsync();
+                return foundVaccine;
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception($"Error update vaccine: {ex.Message}", ex);
+            }
+        }
     }
 }

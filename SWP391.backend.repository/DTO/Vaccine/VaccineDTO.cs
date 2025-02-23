@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace SWP391.backend.repository.DTO.Vaccine
 {
-    public class UpdateVaccineDTO
+    public class VaccineDTO
     {
-        public string? VaccineName { get; set; }
+        public int Id { get; set; }
+        public string? Name { get; set; }
         public string? Manufacture { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
@@ -16,5 +17,7 @@ namespace SWP391.backend.repository.DTO.Vaccine
         public int? RecAgeEnd { get; set; }
         public int? InStockNumber { get; set; }
         public string? Notes { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

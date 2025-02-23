@@ -42,5 +42,20 @@ namespace SWP391.backend.api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPut]
+        [Route("update/{Id}")]
+        public async Task<IActionResult> Update(int Id, UpdateVaccineDTO vaccine)
+        {
+            try
+            {
+                var v = await this.v.Update(Id, vaccine);
+                return Ok(v);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
