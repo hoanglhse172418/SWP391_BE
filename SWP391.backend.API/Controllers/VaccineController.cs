@@ -31,6 +31,18 @@ namespace SWP391.backend.api.Controllers
             return Ok(vaccineList);
         }
 
+        [HttpGet]
+        [Route("get-by-id/{Id}")]
+        public async Task<IActionResult> GetById(int Id)
+        {
+            var vaccine = await v.GetById(Id);
+            if (vaccine == null)
+            {
+                return NotFound();
+            }
+            return Ok(vaccine);
+        }
+
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create([FromForm]CreateVaccineDTO vaccine)

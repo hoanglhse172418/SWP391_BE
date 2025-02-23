@@ -32,10 +32,22 @@ namespace SWP391.backend.services
             }
             catch (Exception ex) 
             {
-                throw new Exception($"Error fetching vaccine: {ex.Message}", ex);
+                throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
             }
         }
 
+        public async Task<Vaccine> GetById(int id)
+        {
+            try
+            {
+                var vaccine = await context.Vaccines.FirstOrDefaultAsync(v => v.Id == id);
+                return vaccine;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error get vaccine: {ex.Message}", ex);
+            }
+        }
         public async Task<Vaccine> Create(CreateVaccineDTO request, string imageUrl)
         {
             try
