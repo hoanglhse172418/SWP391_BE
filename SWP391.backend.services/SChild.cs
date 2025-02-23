@@ -121,7 +121,6 @@ namespace SWP391.backend.services
                 Dob = request.Dob,
                 Gender = request.Gender,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
                 FatherFullName = request.FatherFullName,
                 MotherFullName = request.MotherFullName,
                 FatherPhoneNumber = request.FatherPhoneNumber,
@@ -138,7 +137,6 @@ namespace SWP391.backend.services
             {
                 ChildrenId = child.Id,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
             };
 
             // Add VaccinationProfile to database
@@ -147,7 +145,6 @@ namespace SWP391.backend.services
 
             return child;
         }
-
 
         public async Task<Child> Update(int Id, UpdateChildDTO request)
         {
