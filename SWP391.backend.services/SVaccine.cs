@@ -36,7 +36,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<Vaccine> Create(CreateVaccineDTO request)
+        public async Task<Vaccine> Create(CreateVaccineDTO request, string imageUrl)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace SWP391.backend.services
                     Name = request.VaccineName,
                     Manufacture = request.Manufacture,
                     Description = request.Description,
-                    ImageUrl = request.ImageUrl,
+                    ImageUrl = imageUrl,
                     RecAgeStart = request.RecAgeStart,
                     RecAgeEnd = request.RecAgeEnd,
                     InStockNumber = request.InStockNumber,
@@ -63,7 +63,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request)
+        public async Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request, string imageUrl)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace SWP391.backend.services
                 foundVaccine.Name = string.IsNullOrEmpty(request.VaccineName) ? foundVaccine.Name : request.VaccineName;
                 foundVaccine.Manufacture = string.IsNullOrEmpty(request.Manufacture) ? foundVaccine.Manufacture : request.Manufacture;
                 foundVaccine.Description = string.IsNullOrEmpty(request.Description) ? foundVaccine.Description : request.Description;
-                foundVaccine.ImageUrl = string.IsNullOrEmpty(request.ImageUrl) ? foundVaccine.ImageUrl : request.ImageUrl;
+                foundVaccine.ImageUrl = string.IsNullOrEmpty(imageUrl) ? foundVaccine.ImageUrl : imageUrl;
                 foundVaccine.RecAgeStart = string.IsNullOrEmpty(request.RecAgeStart.ToString()) ? foundVaccine.RecAgeStart : request.RecAgeStart;
                 foundVaccine.RecAgeEnd = string.IsNullOrEmpty(request.RecAgeEnd.ToString()) ? foundVaccine.RecAgeEnd : request.RecAgeEnd;
                 foundVaccine.Notes = string.IsNullOrEmpty(request.Notes) ? foundVaccine.Notes : request.Notes;

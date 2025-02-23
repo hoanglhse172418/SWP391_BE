@@ -10,6 +10,7 @@ using System.Text;
 using SWP391.backend.repository;
 using SWP391.backend.services;
 using SWP391.backend.repository.Models;
+using CloudinaryDotNet;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,12 +32,25 @@ builder.Services.AddCors(p => p.AddPolicy("MyCors", build =>
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
+var cloudinaryAccount = new Account(
+   "fishbone2710",
+    "836531281436691",
+    "xvwh6mh7T0VzyscnfcsxvG08bEg"
+);
+
+var cloudinary = new Cloudinary(cloudinaryAccount);
+cloudinary.Api.Secure = true;
+
+
 builder.Services.AddScoped<IChild, SChild>();
 builder.Services.AddScoped<IDisease, SDisease>();
 builder.Services.AddScoped<IUser, SUser>();
 builder.Services.AddScoped<IVaccinationProfile, SVaccinationProfile>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
 builder.Services.AddScoped<IVaccine, SVaccine>();
+builder.Services.AddScoped<IVaccinePackage, SVaccinePackage>();
+builder.Services.AddSingleton(cloudinary);
+builder.Services.AddScoped<SCloudinary>();
 
 // Swagger Configuration
 builder.Services.AddSwaggerGen(option =>
