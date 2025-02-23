@@ -36,6 +36,7 @@ builder.Services.AddScoped<IDisease, SDisease>();
 builder.Services.AddScoped<IUser, SUser>();
 builder.Services.AddScoped<IVaccinationProfile, SVaccinationProfile>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
+builder.Services.AddScoped<IVaccine, SVaccine>();
 
 // Swagger Configuration
 builder.Services.AddSwaggerGen(option =>
