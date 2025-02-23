@@ -22,6 +22,7 @@ namespace SWP391.backend.repository.Models
         public virtual DbSet<Disease> Diseases { get; set; } = null!;
         public virtual DbSet<Payment> Payments { get; set; } = null!;
         public virtual DbSet<PaymentDetail> PaymentDetails { get; set; } = null!;
+        public virtual DbSet<Room> Rooms { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
         public virtual DbSet<VaccinationDetail> VaccinationDetails { get; set; } = null!;
         public virtual DbSet<VaccinationProfile> VaccinationProfiles { get; set; } = null!;
@@ -62,6 +63,8 @@ namespace SWP391.backend.repository.Models
                     .HasColumnName("created_at")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.Property(e => e.DateInjection).HasColumnType("date");
+
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
 
                 entity.Property(e => e.Status)
@@ -86,6 +89,11 @@ namespace SWP391.backend.repository.Models
                     .HasForeignKey(d => d.ChildrenId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK__Appointme__child__04E4BC85");
+
+                entity.HasOne(d => d.Room)
+                    .WithMany(p => p.Appointments)
+                    .HasForeignKey(d => d.RoomId)
+                    .HasConstraintName("FK_Appointment_Room");
 
                 entity.HasOne(d => d.Vaccine)
                     .WithMany(p => p.Appointments)
@@ -236,6 +244,13 @@ namespace SWP391.backend.repository.Models
                     .WithMany(p => p.PaymentDetails)
                     .HasForeignKey(d => d.VaccineId)
                     .HasConstraintName("FK__PaymentDe__vacci__0D7A0286");
+            });
+
+            modelBuilder.Entity<Room>(entity =>
+            {
+                entity.ToTable("Room");
+
+                entity.Property(e => e.RoomNumber).HasMaxLength(50);
             });
 
             modelBuilder.Entity<User>(entity =>
