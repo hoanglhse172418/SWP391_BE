@@ -50,6 +50,7 @@ builder.Services.AddScoped<IVaccinationProfile, SVaccinationProfile>();
 builder.Services.AddScoped<IVaccine, SVaccine>();
 builder.Services.AddScoped<IVaccinePackage, SVaccinePackage>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
+builder.Services.AddScoped<IAppointment, SAppointment>();
 
 
 builder.Services.AddSingleton(cloudinary);
