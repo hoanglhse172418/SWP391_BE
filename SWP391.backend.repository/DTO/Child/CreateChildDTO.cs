@@ -10,7 +10,7 @@ namespace SWP391.backend.repository.DTO.Child
     {
         public int? UserId { get; set; }
         public string ChildrenFullname { get; set; }
-        public DateOnly? Dob { get; set; }
+        public DateTime? Dob { get; set; }
         public string? Gender { get; set; }
         public string? FatherFullName { get; set; }
         public string? MotherFullName { get; set; }

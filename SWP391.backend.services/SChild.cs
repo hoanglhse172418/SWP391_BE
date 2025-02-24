@@ -118,7 +118,7 @@ namespace SWP391.backend.services
             {
                 UserId = request.UserId,
                 ChildrenFullname = request.ChildrenFullname,
-                Dob = request.Dob.HasValue ? new DateTime(request.Dob.Value.Year, request.Dob.Value.Month, request.Dob.Value.Day) : (DateTime?)null,
+                Dob = request.Dob,
                 Gender = request.Gender,
                 CreatedAt = DateTime.UtcNow,
                 FatherFullName = request.FatherFullName,
@@ -158,7 +158,7 @@ namespace SWP391.backend.services
 
                 // Update child details
                 child.ChildrenFullname = request.ChildrenFullname ?? child.ChildrenFullname;
-                child.Dob = request.Dob.HasValue ? new DateTime(request.Dob.Value.Year, request.Dob.Value.Month, request.Dob.Value.Day) : child.Dob;
+                child.Dob = request.Dob ?? child.Dob;
                 child.Gender = request.Gender ?? child.Gender;
                 child.FatherFullName = request.FatherFullName ?? child.FatherFullName;
                 child.MotherFullName = request.MotherFullName ?? child.MotherFullName;
