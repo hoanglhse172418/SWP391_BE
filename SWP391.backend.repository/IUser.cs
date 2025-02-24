@@ -13,8 +13,8 @@ namespace SWP391.backend.repository
     {
         Task<List<User>> GetAll(GetAllDTO request);
         Task<User> CreateUser(CreateUserDTO request);
-        Task<User> CreateStaff(CreateUserDTO request);
-        Task<User> CreateDoctor(CreateUserDTO request);
+        Task<User> CreateStaff(CreateStaffDTO request);
+        Task<User> CreateDoctor(CreateStaffDTO request);
         Task<User> Update(int id, UpdateUserDTO user);
         Task<User> GetByID(int id);
         Task<bool> Delete(int id);
