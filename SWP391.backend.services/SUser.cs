@@ -157,7 +157,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<User> CreateStaff(CreateUserDTO request)
+        public async Task<User> CreateStaff(CreateStaffDTO request)
         {
             try
             {
@@ -179,7 +179,8 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
-                    Username=request.Username,
+                    Fullname = request.Fullname,
+                    Username =request.Username,
                     Email = request.Email,
                     Role = "staff",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
@@ -197,7 +198,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<User> CreateDoctor(CreateUserDTO request)
+        public async Task<User> CreateDoctor(CreateStaffDTO request)
         {
             try
             {
@@ -219,6 +220,7 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
+                    Fullname = request.Username,
                     Username = request.Username,
                     Email = request.Email,
                     Role = "doctor",
