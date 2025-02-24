@@ -221,7 +221,7 @@ namespace SWP391.backend.services
                 {
                     Username = request.Username,
                     Email = request.Email,
-                    Role = "staff",
+                    Role = "doctor",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     CreatedAt = DateTime.UtcNow
                 };
