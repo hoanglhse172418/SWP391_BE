@@ -147,5 +147,32 @@ namespace SWP391.backend.services
                 .ThenInclude(v => v.Vaccine)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
+
+        public async Task<List<VaccinePackage?>> GetAllAsync()
+        {
+            return await _swpContext.VaccinePackages
+                .Include(p => p.VaccinePackageItems)
+                .ToListAsync();
+        }
+
+        public async Task<bool> DeleteVaccinePackageAsync(int id)
+        {
+            var vaccinePackage = await _swpContext.VaccinePackages
+                .Include(p => p.VaccinePackageItems)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (vaccinePackage == null)
+                throw new ArgumentException($"Vaccine package with ID {id} not found.");
+
+            // Xóa các VaccinePackageItem liên quan
+            _swpContext.VaccinePackageItems.RemoveRange(vaccinePackage.VaccinePackageItems);
+
+            // Xóa VaccinePackage
+            _swpContext.VaccinePackages.Remove(vaccinePackage);
+
+            await _swpContext.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

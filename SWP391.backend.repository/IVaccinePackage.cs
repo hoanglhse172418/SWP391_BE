@@ -13,5 +13,7 @@ namespace SWP391.backend.repository
         Task<VaccinePackage> CreateVaccinePackageAsync(CreateVaccinePackageDTO request);
         Task<VaccinePackage> UpdateVaccinePackageAsync(UpdateVaccinePackageDTO request);
         Task<VaccinePackage?> GetVaccinePackageByIdAsync(int id);
+        Task<List<VaccinePackage?>> GetAllAsync();
+        Task<bool> DeleteVaccinePackageAsync(int id);
     }
 }
