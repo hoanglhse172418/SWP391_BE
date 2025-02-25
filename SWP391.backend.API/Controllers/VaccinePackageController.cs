@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO.VaccinePackage;
 using SWP391.backend.repository.Models;
+using SWP391.backend.services;
 
 namespace SWP391.backend.api.Controllers
 {
@@ -58,6 +59,32 @@ namespace SWP391.backend.api.Controllers
                 return NotFound(new { message = "Vaccine package not found." });
 
             return Ok(package);
+        }
+
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAllVaccinePackage()
+        {
+            var packageList = await _vp.GetAllAsync();
+            if (packageList == null)
+                return NotFound(new { message = "Vaccine package not found." });
+            return Ok(packageList);
+        }
+
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteVaccinePackage(int id)
+        {
+            try
+            {
+                var result = await _vp.DeleteVaccinePackageAsync(id);
+                if (!result)
+                    return NotFound(new { message = "Vaccine package not found" });
+
+                return Ok(new { message = "Vaccine package deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

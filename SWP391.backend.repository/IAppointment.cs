@@ -10,8 +10,12 @@ namespace SWP391.backend.repository
     public interface IAppointment
     {
         Task<AppointmentDTO> BookAppointment(CreateAppointmentDTO dto);
-        Task<AppointmentDTO> GetAppointment(int id);
-        Task<List<AppointmentDTO>> GetAppointmentsToday();
-        Task<List<AppointmentDTO>> GetAppointmentsFuture();
+        Task<List<AppointmentDTO>> GetAllAppointment();
+        Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync();
+        //Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id);
+        Task<AppointmentDetailDTO?> GetAppointmentByIdAsync(int appointmentId);
+        Task<bool> UpdateAppointmentAsync(int appointmentId, string? newStatus, int? doctorId, int? roomId);
+        Task<List<TodayAppointmentDTO>> GetAppointmentsToday();
+        Task<List<FutureAppointmentDTO>> GetAppointmentsFuture();
     }
 }

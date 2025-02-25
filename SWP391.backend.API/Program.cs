@@ -51,10 +51,14 @@ builder.Services.AddScoped<IVaccine, SVaccine>();
 builder.Services.AddScoped<IVaccinePackage, SVaccinePackage>();
 builder.Services.AddScoped<IVaccineTemplate, SVaccineTemplate>();
 builder.Services.AddScoped<IAppointment, SAppointment>();
+builder.Services.AddScoped<IPayment, SPayment>();
 
 
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddScoped<SCloudinary>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddLogging();
 
 // Swagger Configuration
 builder.Services.AddSwaggerGen(option =>

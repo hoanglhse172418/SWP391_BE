@@ -35,7 +35,6 @@ namespace SWP391.backend.services
                 throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
             }
         }
-
         public async Task<Vaccine> GetById(int id)
         {
             try
@@ -74,7 +73,6 @@ namespace SWP391.backend.services
                 throw new Exception($"Error create vaccine: {ex.Message}", ex);
             }
         }
-
         public async Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request, string imageUrl)
         {
             try
