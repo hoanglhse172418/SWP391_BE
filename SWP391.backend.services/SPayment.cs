@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SWP391.backend.repository;
+using SWP391.backend.repository.DTO.Payment;
 using SWP391.backend.repository.Models;
 using System;
 using System.Collections.Generic;
@@ -36,8 +37,8 @@ namespace SWP391.backend.services
             {
                 AppointmentId = appointment.Id,
                 TotalPrice = CalculateTotalPrice(appointment),
-                PaymentMethod = "Pending",
-                PaymentStatus = "Unpaid",
+                PaymentMethod = "Cash",
+                PaymentStatus = "Paid",
                 InjectionProcessStatus = "Not Started"
             };
 
@@ -46,7 +47,6 @@ namespace SWP391.backend.services
             return true;
         }
 
-        // Phương thức tính giá tiền cho lịch hẹn
         private decimal CalculateTotalPrice(Appointment appointment)
         {
             if (appointment.VaccinePackageId.HasValue)
@@ -54,6 +54,37 @@ namespace SWP391.backend.services
                 return appointment.VaccinePackage?.TotalPrice ?? 0;
             }
             return decimal.Parse(appointment.Vaccine.Price);
+        }
+
+        public async Task<PaymentDetailDTO?> GetPaymentDetailAsync(int paymentId)
+        {
+            var payment = await _context.Payments
+                .Include(p => p.Appointment)
+                .Include(p => p.PaymentDetails)
+                    .ThenInclude(pd => pd.Vaccine)
+                .FirstOrDefaultAsync(p => p.Id == paymentId);
+
+            if (payment == null) return null;
+
+            return new PaymentDetailDTO
+            {
+                PaymentId = payment.Id,
+                AppointmentId = payment.AppointmentId ?? 0,
+                DateInjection = payment.Appointment?.DateInjection ?? DateTime.MinValue,
+                Status = payment.PaymentStatus ?? "Unknown",
+                TotalPrice = payment.TotalPrice ?? 0,
+                PaymentMethod = payment.PaymentMethod ?? "N/A",
+                PaymentStatus = payment.PaymentStatus ?? "Unpaid",
+                InjectionProcessStatus = payment.InjectionProcessStatus ?? "Not Started",
+                Vaccines = payment.PaymentDetails.Select(pd => new VaccineDetailDTO
+                {
+                    VaccineName = pd.Vaccine?.Name ?? "Unknown",
+                    DoseNumber = pd.DoseNumber ?? 0,
+                    DoseRemaining = pd.DoseRemaining ?? 0,
+                    PricePerDose = pd.PricePerDose ?? 0,
+                    IsInjected = (pd.DoseRemaining ?? 0) == 0 // Nếu DoseRemaining = 0 thì đã tiêm đủ mũi
+                }).ToList()
+            };
         }
     }
 }
