@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Razor.TagHelpers;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO.Appointment;
 using SWP391.backend.repository.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,13 +19,20 @@ namespace SWP391.backend.services
     {
         private readonly swpContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<SAppointment> _logger;
+        private readonly IPayment _payment;
 
-        public SAppointment(swpContext context, IConfiguration configuration)
+        public SAppointment(swpContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SAppointment> logger, IPayment payment)
         {
             _context = context;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
+            _payment = payment;
         }
 
+        //Create appointment
         public async Task<AppointmentDTO> BookAppointment(CreateAppointmentDTO dto)
         {
             if (string.IsNullOrEmpty(dto.VaccineType) || (dto.VaccineType != "Single") && (dto.VaccineType != "Package"))
@@ -79,33 +89,70 @@ namespace SWP391.backend.services
             };
         }
 
-        public async Task<AppointmentDTO> GetAppointment(int id)
+        public async Task<AppointmentDetailDTO?> GetAppointmentByIdAsync(int appointmentId)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
-            if (appointment == null)
-                throw new KeyNotFoundException("Appointment not found.");
+            var appointment = await _context.Appointments
+                .Include(a => a.Children)
+                .Include(a => a.Vaccine)
+                .Include(a => a.VaccinePackage)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-            return new AppointmentDTO
+            if (appointment == null) return null;
+
+            return new AppointmentDetailDTO
             {
                 Id = appointment.Id,
-                ChildrenId = appointment.ChildrenId,
-                Type = appointment.Type,
-                VaccineId = appointment.VaccineId,
-                VaccinePackageId = appointment.VaccinePackageId,
-                DoctorId = appointment.DoctorId,
-                RoomId = appointment.RoomId,
-                DateInjection = appointment.DateInjection,
+                ChildFullName = appointment.Children?.ChildrenFullname ?? "N/A",
+                ParentPhoneNumber = appointment.Children?.MotherPhoneNumber ?? "N/A",
+                VaccineType = appointment.VaccinePackageId.HasValue ? "Package" : "Single",
+                VaccineName = appointment.VaccinePackageId.HasValue ? appointment.VaccinePackage.Name : appointment.Vaccine?.Name ?? "N/A",
+                DateInjection = appointment.DateInjection ?? DateTime.MinValue,
                 Status = appointment.Status,
-                CreatedAt = appointment.CreatedAt,
-                UpdatedAt = appointment.UpdatedAt
+                DoctorId = appointment.DoctorId,
+                RoomId = appointment.RoomId
             };
         }
 
-        public async Task<List<AppointmentDTO>> GetAppointmentsToday()
+        public async Task<bool> UpdateAppointmentAsync(int appointmentId, string? newStatus, int? doctorId, int? roomId)
         {
-            var today = DateTime.UtcNow.Date;
+            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+            if (appointment == null) return false;
+
+            // Cập nhật trạng thái
+            if (!string.IsNullOrEmpty(newStatus))
+            {
+                // Nếu chuyển từ "Booked" sang "Confirmed" => Gọi service để tạo Payment
+                if (appointment.Status == "Booked" && newStatus == "Confirmed")
+                {
+                    var paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
+                    if (!paymentCreated) return false;
+                }
+
+                appointment.Status = newStatus;
+            }
+
+            // Cập nhật bác sĩ
+            if (doctorId.HasValue)
+            {
+                appointment.DoctorId = doctorId;
+            }
+
+            // Cập nhật phòng
+            if (roomId.HasValue)
+            {
+                appointment.RoomId = roomId;
+            }
+
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
+        public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
+        {
             var appointmentList = await _context.Appointments
-                .Where(a => a.DateInjection == today)
+                .Where(a => a.ChildrenId == Id)
                 .OrderBy(a => a.DateInjection)
                 .ToListAsync();
 
@@ -125,14 +172,9 @@ namespace SWP391.backend.services
             }).ToList();
         }
 
-        public async Task<List<AppointmentDTO>> GetAppointmentsFuture()
+        public async Task<List<AppointmentDTO>> GetAllAppointment()
         {
-            var today = DateTime.UtcNow.Date;
-            var appointmentList = await _context.Appointments
-                .Where(a => a.DateInjection > today)
-                .OrderBy(a => a.DateInjection)
-                .ToListAsync();
-
+            var appointmentList = await _context.Appointments.ToListAsync();
             return appointmentList.Select(a => new AppointmentDTO
             {
                 Id = a.Id,
@@ -147,6 +189,117 @@ namespace SWP391.backend.services
                 RoomId = a.RoomId,
                 DateInjection = a.DateInjection
             }).ToList();
+        }
+
+        public async Task<List<TodayAppointmentDTO>> GetAppointmentsToday()
+        {
+            var today = DateTime.UtcNow.Date;
+            var appointments = await _context.Appointments
+                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date == today)
+                .Include(a => a.Children)
+                .ToListAsync();
+
+            return appointments.Select(a => new TodayAppointmentDTO
+            {
+                Id = a.Id,
+                ChildFullName = a.Children != null ? a.Children.ChildrenFullname : "N/A",
+                VaccineType = a.VaccinePackageId.HasValue ? "Package" : "Single",
+                DateInjection = a.DateInjection.Value,
+                Status = a.Status
+            }).ToList();
+        }
+
+        public async Task<List<FutureAppointmentDTO>> GetAppointmentsFuture()
+        {
+            var today = DateTime.UtcNow.Date;
+            var appointments = await _context.Appointments
+                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date > today)
+                .Include(a => a.Children)
+                .ToListAsync();
+
+            return appointments.Select(a => new FutureAppointmentDTO
+            {
+                Id = a.Id,
+                ChildFullName = a.Children != null ? a.Children.ChildrenFullname : "N/A",
+                VaccineType = a.VaccinePackageId.HasValue ? "Package" : "Single",
+                DateInjection = a.DateInjection.Value,
+                Status = a.Status
+            }).ToList();
+        }
+
+        public async Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync()
+        {
+            var customerId = GetCurrentUserId();
+
+            var appointments = await _context.Appointments
+                .Where(a => a.Children.UserId == customerId) // Make sure this is correct
+                .Include(a => a.Children) // Ensure children data is loaded
+                .Include(a => a.Vaccine)
+                .Include(a => a.VaccinePackage)
+                .ThenInclude(vp => vp.VaccinePackageItems)
+                .ThenInclude(vpi => vpi.Vaccine)
+                .ToListAsync();
+
+
+            var responseDto = new CustomerAppointmentsDTO();
+
+            foreach (var appointment in appointments)
+            {
+                if (appointment.VaccinePackageId.HasValue) // Gói vắc xin
+                {
+                    var packageDto = new PackageVaccineAppointmentDTO
+                    {
+                        ChildFullName = appointment.Children?.ChildrenFullname ?? "N/A",
+                        ContactPhoneNumber = appointment.Children?.FatherPhoneNumber ?? "N/A",
+                        VaccinePackageName = appointment.VaccinePackage?.Name ?? "Unknown Package",
+                        DateInjection = appointment.DateInjection ?? DateTime.MinValue,
+                        Status = appointment.Status ?? "Unknown"
+                    };
+
+                    DateTime nextInjectionDate = appointment.DateInjection ?? DateTime.MinValue;
+
+                    foreach (var packageItem in appointment.VaccinePackage.VaccinePackageItems)
+                    {
+                        for (int i = 0; i < packageItem.DoseNumber; i++)
+                        {
+                            packageDto.FollowUpAppointments.Add(new FollowUpAppointmentDTO
+                            {
+                                VaccineName = packageItem.Vaccine.Name,
+                                DoseNumber = i + 1,
+                                DateInjection = nextInjectionDate,
+                                Status = (i == 0) ? appointment.Status : "Pending"
+                            });
+
+                            nextInjectionDate = nextInjectionDate.AddDays(30);
+                        }
+                    }
+
+                    responseDto.PackageVaccineAppointments.Add(packageDto);
+                }
+                else // Vắc xin lẻ
+                {
+                    responseDto.SingleVaccineAppointments.Add(new SingleVaccineAppointmentDTO
+                    {
+                        ChildFullName = appointment.Children?.ChildrenFullname ?? "N/A",
+                        ContactPhoneNumber = appointment.Children?.FatherPhoneNumber ?? "N/A",
+                        VaccineName = appointment.Vaccine?.Name ?? "Unknown Vaccine",
+                        DateInjection = appointment.DateInjection ?? DateTime.MinValue,
+                        Status = appointment.Status ?? "Unknown"
+                    });
+                }
+            }
+
+            return responseDto;
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id"); // Phù hợp với claim trong SUser
+            if (claim != null && int.TryParse(claim.Value, out int userId))
+            {
+                return userId;
+            }
+            return null;
         }
     }
 }
