@@ -35,7 +35,7 @@ namespace SWP391.backend.services
 
             var vaccinePackage = new VaccinePackage
             {
-                Id = int.Parse("VP" + new Random().Next(1000, 9999)),
+                //Id = int.Parse("VP" + new Random().Next(1000, 9999)),
                 Name = request.Name,
                 CreatedAt = DateTime.UtcNow
             };
