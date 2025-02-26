@@ -53,7 +53,7 @@ namespace SWP391.backend.api.Controllers
         [AllowAnonymous]
         [Route("create-staff")]
         [HttpPost]
-        public async Task<IActionResult> CreateStaff(CreateUserDTO user)
+        public async Task<IActionResult> CreateStaff(CreateStaffDTO user)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace SWP391.backend.api.Controllers
         [AllowAnonymous]
         [Route("create-doctor")]
         [HttpPost]
-        public async Task<IActionResult> CreateDoctor(CreateUserDTO user)
+        public async Task<IActionResult> CreateDoctor(CreateStaffDTO user)
         {
             try
             {

@@ -58,7 +58,7 @@ namespace SWP391.backend.services
                             query = query.Where(a => a.Fullname != null && a.Fullname.Contains(request.FilterQuery));
                             break;
                         case "role":
-                            query = query.Where(a => a.Role != null && a.Role.Equals(request.FilterQuery, StringComparison.OrdinalIgnoreCase));
+                            query = query.Where(a => a.Role != null && a.Role.Contains(request.FilterQuery));
                             break;
                         case "lastlogin":
                             if (DateTime.TryParse(request.FilterQuery, out var lastLogin))
@@ -157,7 +157,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<User> CreateStaff(CreateUserDTO request)
+        public async Task<User> CreateStaff(CreateStaffDTO request)
         {
             try
             {
@@ -179,7 +179,8 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
-                    Username=request.Username,
+                    Fullname = request.Fullname,
+                    Username =request.Username,
                     Email = request.Email,
                     Role = "staff",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
@@ -197,7 +198,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<User> CreateDoctor(CreateUserDTO request)
+        public async Task<User> CreateDoctor(CreateStaffDTO request)
         {
             try
             {
@@ -219,9 +220,10 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
+                    Fullname = request.Username,
                     Username = request.Username,
                     Email = request.Email,
-                    Role = "staff",
+                    Role = "doctor",
                     Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     CreatedAt = DateTime.UtcNow
                 };

@@ -35,7 +35,7 @@ namespace SWP391.backend.services
                 {
                     switch (request.FilterOn.ToLower())
                     {
-                        case "UserId":
+                        case "userid":
                             if (int.TryParse(request.FilterQuery, out var userId))
                                 query = query.Where(c => c.UserId == userId);
                             break;
