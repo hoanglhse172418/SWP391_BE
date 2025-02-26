@@ -62,7 +62,8 @@ namespace SWP391.backend.services
                     InStockNumber = request.InStockNumber,
                     Price = request.Price,
                     Notes = request.Notes,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    Id = int.Parse("V" + new Random().Next(1000, 9999))
                 };
                 context.Vaccines.Add(newVaccine);
                 await context.SaveChangesAsync();

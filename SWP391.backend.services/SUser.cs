@@ -58,7 +58,7 @@ namespace SWP391.backend.services
                             query = query.Where(a => a.Fullname != null && a.Fullname.Contains(request.FilterQuery));
                             break;
                         case "role":
-                            query = query.Where(a => a.Role != null && a.Role.Equals(request.FilterQuery, StringComparison.OrdinalIgnoreCase));
+                            query = query.Where(a => a.Role != null && a.Role.Contains(request.FilterQuery));
                             break;
                         case "lastlogin":
                             if (DateTime.TryParse(request.FilterQuery, out var lastLogin))
