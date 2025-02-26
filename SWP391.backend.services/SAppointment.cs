@@ -23,6 +23,14 @@ namespace SWP391.backend.services
         private readonly ILogger<SAppointment> _logger;
         private readonly IPayment _payment;
 
+        enum Status
+        {
+            Pending,
+            Processing,
+            Completed,
+            Injected,
+            Canceled
+        }
         public SAppointment(swpContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SAppointment> logger, IPayment payment)
         {
             _context = context;
@@ -51,7 +59,7 @@ namespace SWP391.backend.services
                 RoomId = null,
                 DoctorId = null,
                 DateInjection = dto.AppointmentDate,
-                Status = "Booked",
+                Status = Status.Pending.ToString(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -147,7 +155,6 @@ namespace SWP391.backend.services
             await _context.SaveChangesAsync();
             return true;
         }
-
 
         public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
         {
