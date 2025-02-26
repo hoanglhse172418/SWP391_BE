@@ -28,8 +28,9 @@ namespace SWP391.backend.services
             Pending,
             Processing,
             Completed,
-            Injected,
-            Canceled
+            Canceled,
+            Not_Injected,
+            Injected
         }
         public SAppointment(swpContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SAppointment> logger, IPayment payment)
         {
@@ -124,39 +125,54 @@ namespace SWP391.backend.services
 
         public async Task<bool> UpdateAppointmentAsync(int appointmentId, UpdateAppointmentDTO dto)
         {
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+            var appointment = await _context.Appointments
+                .Include(a => a.Payments) // Include Payment để kiểm tra trạng thái thanh toán
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
             if (appointment == null) return false;
 
             // Cập nhật trạng thái
             if (!string.IsNullOrEmpty(dto.Status))
             {
-                // Nếu chuyển từ "Booked" sang "Confirmed" => Gọi service để tạo Payment
-                if(appointment.Status == "Pending" && dto.Status == "Processing")
+                // Nếu chuyển từ "Pending" sang "Confirmed" => Gọi service để tạo Payment
+                if(appointment.Status == "Pending" && dto.Status == "Checked_In")
                 {
                     appointment.Status = dto.Status;
                 }
-                if (appointment.Status == "Processing" && dto.Status == "Confirmed")
+                if (appointment.Status == "Checked_In" && dto.Status == "Confirmed")
                 {
                     appointment.Status = dto.Status;
-                }
-                if(appointment.Status == "Confirmed")
-                {
+
+                    // Nếu lịch hẹn đã Confirmed, tạo Payment nếu chưa có
                     var paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
                     if (!paymentCreated) return false;
-                }                 
+
+                    // Gán bác sĩ và phòng từ DTO (nếu có)
+                    if (!string.IsNullOrEmpty(dto.DoctorName))
+                    {
+                        var doctor = await _context.Users.FirstOrDefaultAsync(d => d.Fullname == dto.DoctorName);
+                        if (doctor != null)
+                        {
+                            appointment.DoctorId = doctor.Id;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(dto.RoomNumber))
+                    {
+                        var room = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomNumber == dto.RoomNumber);
+                        if (room != null)
+                        {
+                            appointment.RoomId = room.Id;
+                        }
+                    }
+                }
             }
 
-            // Cập nhật bác sĩ
-            //if (doctorId.HasValue)
-            //{
-            //    appointment.DoctorId = doctorId;
-            //}
-
-            //// Cập nhật phòng
-            //if (roomId.HasValue)
-            //{
-            //    appointment.RoomId = roomId;
-            //}
+            // Kiểm tra nếu lịch hẹn đã Confirmed và payment của nó đã được thanh toán
+            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
+            if (appointment.Status == "Confirmed" && payment != null && payment.PaymentStatus == "Paid")
+            {
+                appointment.Status = "Waiting Inject";
+            }
 
             appointment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -314,6 +330,6 @@ namespace SWP391.backend.services
                 return userId;
             }
             return null;
-        }
+        }        
     }
 }
