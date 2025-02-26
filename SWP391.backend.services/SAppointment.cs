@@ -123,7 +123,7 @@ namespace SWP391.backend.services
             };
         }
 
-        public async Task<bool> UpdateAppointmentAsync(int appointmentId, UpdateAppointmentDTO dto)
+        public async Task<bool> UpdateAppointmentForStaffAsync(int appointmentId, UpdateAppointmentDTO dto)
         {
             var appointment = await _context.Appointments
                 .Include(a => a.Payments) // Include Payment để kiểm tra trạng thái thanh toán
@@ -174,35 +174,39 @@ namespace SWP391.backend.services
                 appointment.Status = "Waiting Inject";
             }
             
+            if(appointment.Status == "Injected" && dto.Status == "Completed")
+            {
+                appointment.Status = "Completed";
+            }
 
             appointment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }
 
-        //public async Task<bool> UpdateAppointmentStatusForDoctorAsync(int appointmentId, UpdateAppointmentDoctorDTO dto)
-        //{
-        //    var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
-        //    if (appointment == null) return false;
+        public async Task<bool> UpdateAppointmentForDoctorAsync(int appointmentId, UpdateAppointmentDoctorDTO dto)
+        {
+            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+            if (appointment == null) return false;
 
-        //    // Chỉ cho phép cập nhật nếu lịch hẹn đang ở trạng thái "Waiting Inject"
-        //    if (appointment.Status == "Waiting Inject")
-        //    {
-        //        appointment.Status = "Injected";
+            // Chỉ cho phép cập nhật nếu trạng thái là "Waiting Inject"
+            if (appointment.Status == "Waiting Inject" && dto.Status == "Injected")
+            {
+                appointment.Status = "Injected";
 
-        //        // Nếu bác sĩ muốn cập nhật ngày tiêm cho lần tiếp theo
-        //        if (dto.NextInjectionDate.HasValue)
-        //        {
-        //            appointment.DateInjection = dto.NextInjectionDate.Value;
-        //        }
+                //// Nếu lịch hẹn có gói vắc xin
+                //if (appointment.VaccinePackageId.HasValue)
+                //{
+                //    // Nếu bác sĩ không nhập ngày, mặc định cộng thêm 30 ngày
+                //    appointment.DateInjection = dto.NextInjectionDate ?? appointment.DateInjection?.AddDays(30);
+                //}
 
-        //        appointment.UpdatedAt = DateTime.UtcNow;
-        //        await _context.SaveChangesAsync();
-        //        return true;
-        //    }
-
-        //    return false; // Trả về false nếu không thể cập nhật (ví dụ: trạng thái không hợp lệ)
-        //}
+                appointment.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            return false; // Nếu trạng thái không hợp lệ, trả về false
+        }
 
 
         public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
@@ -283,7 +287,6 @@ namespace SWP391.backend.services
                 Status = a.Status
             }).ToList();
         }
-
 
         public async Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync()
         {
