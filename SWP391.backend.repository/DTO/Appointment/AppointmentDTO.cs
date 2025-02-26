@@ -61,6 +61,7 @@ namespace SWP391.backend.repository.DTO.Appointment
 
     public class UpdateAppointmentDoctorDTO
     {
-        public DateTime? NextInjectionDate { get; set; }
+        public string? Status { get; set; }
+        //public DateTime? NextInjectionDate { get; set; }
     }
 }
