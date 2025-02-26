@@ -50,7 +50,7 @@ namespace SWP391.backend.services
             return true;
         }
 
-        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId)
+        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId, string status)
         {
             var payment = await _context.Payments
                 .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
@@ -61,7 +61,7 @@ namespace SWP391.backend.services
             if (payment.PaymentStatus == "Paid")
                 return false; // Trạng thái đã là Paid, không cần cập nhật
 
-            payment.PaymentStatus = "Paid";
+            payment.PaymentStatus = status;
 
             _context.Payments.Update(payment);
             await _context.SaveChangesAsync();

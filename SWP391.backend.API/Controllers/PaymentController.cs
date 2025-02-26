@@ -26,9 +26,9 @@ namespace SWP391.backend.api.Controllers
 
 
         [HttpPut("update-status/{appointmentId}")]
-        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId)
+        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId, string status)
         {
-            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId);
+            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId, status);
 
             if (!result)
             {
