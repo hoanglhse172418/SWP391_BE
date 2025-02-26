@@ -44,6 +44,7 @@ cloudinary.Api.Secure = true;
 
 builder.Services.AddScoped<IChild, SChild>();
 builder.Services.AddScoped<IDisease, SDisease>();
+builder.Services.AddScoped<IRoom, SRoom>();
 builder.Services.AddScoped<IUser, SUser>();
 builder.Services.AddScoped<IVaccinationDetail, SVaccinationDetail>();
 builder.Services.AddScoped<IVaccinationProfile, SVaccinationProfile>();
