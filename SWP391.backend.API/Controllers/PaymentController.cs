@@ -13,15 +13,29 @@ namespace SWP391.backend.api.Controllers
             this.p = p;
         }
 
-        [HttpGet("detail/{paymentId}")]
-        public async Task<IActionResult> GetPaymentDetail(int paymentId)
+        [HttpGet("detail/{appointmentId}")]
+        public async Task<IActionResult> GetPaymentDetail(int appointmentId)
         {
-            var result = await this.p.GetPaymentDetailAsync(paymentId);
+            var result = await this.p.GetPaymentDetailAsync(appointmentId);
             if (result == null)
             {
                 return NotFound(new { message = "Payment not found" });
             }
             return Ok(result);
+        }
+
+
+        [HttpPut("update-status/{appointmentId}")]
+        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId)
+        {
+            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId);
+
+            if (!result)
+            {
+                return BadRequest("Payment update failed. Either the appointment does not exist, or the payment is already marked as Paid.");
+            }
+
+            return Ok("Payment status updated to Paid successfully.");
         }
     }
 }

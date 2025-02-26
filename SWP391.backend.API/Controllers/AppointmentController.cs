@@ -122,7 +122,7 @@ namespace SWP391.backend.api.Controllers
         [HttpPut("update-appointment")]
         public async Task<IActionResult> UpdateAppointment(int id, [FromBody] UpdateAppointmentDTO dto)
         {
-            var result = await this.a.UpdateAppointmentAsync(id, dto.Status, dto.DoctorId, dto.RoomId);
+            var result = await this.a.UpdateAppointmentAsync(id, dto);
             if (!result) return BadRequest("Cannot update appointment");
 
             return Ok(new { message = "Appointment updated successfully" });

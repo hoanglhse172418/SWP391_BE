@@ -10,6 +10,7 @@ namespace SWP391.backend.repository
     public interface IPayment
     {
         Task<bool> CreatePaymentForAppointment(int appointmentId);
-        Task<PaymentDetailDTO?> GetPaymentDetailAsync(int paymentId);
+        Task<bool> UpdatePaymentStatusToPaid(int appointmentId);
+        Task<PaymentDetailDTO?> GetPaymentDetailAsync(int appointmentId);
     }
 }

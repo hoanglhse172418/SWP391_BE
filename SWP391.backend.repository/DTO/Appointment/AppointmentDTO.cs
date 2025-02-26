@@ -55,7 +55,7 @@ namespace SWP391.backend.repository.DTO.Appointment
     public class UpdateAppointmentDTO
     {
         public string? Status { get; set; }
-        public int? DoctorId { get; set; }
-        public int? RoomId { get; set; }
+        public string? DoctorName { get; set; }
+        public string? RoomNumber { get; set; }
     }  
 }

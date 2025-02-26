@@ -28,9 +28,12 @@ namespace SWP391.backend.services
             if (appointment == null) return false;
 
             // Kiểm tra nếu Payment đã tồn tại
-            if (await _context.Payments.AnyAsync(p => p.AppointmentId == appointmentId))
+            if(appointment.Status == "Confirmed")
             {
-                return false; // Payment đã tồn tại, không cần tạo mới
+                if (await _context.Payments.AnyAsync(p => p.AppointmentId == appointmentId))
+                {
+                    return false; // Payment đã tồn tại, không cần tạo mới
+                }
             }
 
             var payment = new Payment
@@ -38,11 +41,29 @@ namespace SWP391.backend.services
                 AppointmentId = appointment.Id,
                 TotalPrice = CalculateTotalPrice(appointment),
                 PaymentMethod = "Cash",
-                PaymentStatus = "Paid",
+                PaymentStatus = "Not paid",
                 InjectionProcessStatus = "Not Started"
             };
 
             _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId)
+        {
+            var payment = await _context.Payments
+                .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
+
+            if (payment == null)
+                return false; // Không tìm thấy Payment
+
+            if (payment.PaymentStatus == "Paid")
+                return false; // Trạng thái đã là Paid, không cần cập nhật
+
+            payment.PaymentStatus = "Paid";
+
+            _context.Payments.Update(payment);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -56,34 +77,76 @@ namespace SWP391.backend.services
             return decimal.Parse(appointment.Vaccine.Price);
         }
 
-        public async Task<PaymentDetailDTO?> GetPaymentDetailAsync(int paymentId)
+        public async Task<PaymentDetailDTO?> GetPaymentDetailAsync(int appointmentId)
         {
             var payment = await _context.Payments
                 .Include(p => p.Appointment)
+                    .ThenInclude(a => a.Vaccine) // Vaccine đơn lẻ
+                .Include(p => p.Appointment)
+                    .ThenInclude(a => a.VaccinePackage) // Gói vắc xin
+                        .ThenInclude(vp => vp.VaccinePackageItems) // Các mục trong gói
+                            .ThenInclude(vpi => vpi.Vaccine) // Vắc xin trong gói
                 .Include(p => p.PaymentDetails)
-                    .ThenInclude(pd => pd.Vaccine)
-                .FirstOrDefaultAsync(p => p.Id == paymentId);
+                    .ThenInclude(pd => pd.Vaccine) // Chi tiết thanh toán liên kết với vắc xin
+                .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
 
-            if (payment == null) return null;
+            if (payment == null)
+                return null;
+
+            var appointment = payment.Appointment;
+            if (appointment == null)
+                throw new ArgumentException("Không tìm thấy lịch hẹn tương ứng với Payment.");
+
+            var vaccines = new List<VaccineDetailDTO>();
+
+            // Nếu lịch hẹn có một loại vắc xin đơn lẻ
+            if (appointment.VaccineId.HasValue && appointment.Vaccine != null)
+            {
+                int doseInjected = _context.PaymentDetails
+                    .Count(pd => pd.VaccineId == appointment.VaccineId && pd.PaymentId == payment.Id);
+              
+                vaccines.Add(new VaccineDetailDTO
+                {
+                    VaccineName = appointment.Vaccine.Name,
+                    DoseNumber = 1, // Vắc xin lẻ chỉ có một liều
+                    DoseRemaining = 1 - doseInjected,
+                    PricePerDose = appointment.Vaccine.Price != null ? decimal.Parse(appointment.Vaccine.Price) : 0,
+                    IsInjected = doseInjected > 0
+                });
+            }
+
+            // Nếu lịch hẹn có gói vắc xin
+            if (appointment.VaccinePackageId.HasValue && appointment.VaccinePackage != null)
+            {
+                foreach (var item in appointment.VaccinePackage.VaccinePackageItems)
+                {
+                    var vaccine = item.Vaccine;
+                    if (vaccine == null) continue; // Tránh lỗi nếu Vaccine bị null
+
+                    int doseInjected = _context.PaymentDetails
+                        .Count(pd => pd.VaccineId == vaccine.Id && pd.PaymentId == payment.Id);
+
+                    vaccines.Add(new VaccineDetailDTO
+                    {
+                        VaccineName = vaccine.Name,
+                        DoseNumber = item.DoseNumber, // Số liều của vắc xin trong gói
+                        DoseRemaining = item.DoseNumber - doseInjected,
+                        PricePerDose = item.PricePerDose,
+                        IsInjected = doseInjected > 0
+                    });
+                }
+            }
 
             return new PaymentDetailDTO
             {
                 PaymentId = payment.Id,
-                AppointmentId = payment.AppointmentId ?? 0,
-                DateInjection = payment.Appointment?.DateInjection ?? DateTime.MinValue,
-                Status = payment.PaymentStatus ?? "Unknown",
+                AppointmentId = appointment.Id,
+                DateInjection = appointment.DateInjection,
                 TotalPrice = payment.TotalPrice ?? 0,
-                PaymentMethod = payment.PaymentMethod ?? "N/A",
-                PaymentStatus = payment.PaymentStatus ?? "Unpaid",
-                InjectionProcessStatus = payment.InjectionProcessStatus ?? "Not Started",
-                Vaccines = payment.PaymentDetails.Select(pd => new VaccineDetailDTO
-                {
-                    VaccineName = pd.Vaccine?.Name ?? "Unknown",
-                    DoseNumber = pd.DoseNumber ?? 0,
-                    DoseRemaining = pd.DoseRemaining ?? 0,
-                    PricePerDose = pd.PricePerDose ?? 0,
-                    IsInjected = (pd.DoseRemaining ?? 0) == 0 // Nếu DoseRemaining = 0 thì đã tiêm đủ mũi
-                }).ToList()
+                PaymentMethod = payment.PaymentMethod,
+                PaymentStatus = payment.PaymentStatus,
+                InjectionProcessStatus = payment.InjectionProcessStatus,
+                Vaccines = vaccines
             };
         }
     }
