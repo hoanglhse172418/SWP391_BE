@@ -121,35 +121,41 @@ namespace SWP391.backend.services
             };
         }
 
-        public async Task<bool> UpdateAppointmentAsync(int appointmentId, string? newStatus, int? doctorId, int? roomId)
+        public async Task<bool> UpdateAppointmentAsync(int appointmentId, UpdateAppointmentDTO dto)
         {
             var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
             if (appointment == null) return false;
 
             // Cập nhật trạng thái
-            if (!string.IsNullOrEmpty(newStatus))
+            if (!string.IsNullOrEmpty(dto.Status))
             {
                 // Nếu chuyển từ "Booked" sang "Confirmed" => Gọi service để tạo Payment
-                if (appointment.Status == "Booked" && newStatus == "Confirmed")
+                if(appointment.Status == "Pending" && dto.Status == "Processing")
+                {
+                    appointment.Status = dto.Status;
+                }
+                if (appointment.Status == "Processing" && dto.Status == "Confirmed")
+                {
+                    appointment.Status = dto.Status;
+                }
+                if(appointment.Status == "Confirmed")
                 {
                     var paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
                     if (!paymentCreated) return false;
-                }
-
-                appointment.Status = newStatus;
+                }                 
             }
 
             // Cập nhật bác sĩ
-            if (doctorId.HasValue)
-            {
-                appointment.DoctorId = doctorId;
-            }
+            //if (doctorId.HasValue)
+            //{
+            //    appointment.DoctorId = doctorId;
+            //}
 
-            // Cập nhật phòng
-            if (roomId.HasValue)
-            {
-                appointment.RoomId = roomId;
-            }
+            //// Cập nhật phòng
+            //if (roomId.HasValue)
+            //{
+            //    appointment.RoomId = roomId;
+            //}
 
             appointment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -239,8 +245,8 @@ namespace SWP391.backend.services
             var customerId = GetCurrentUserId();
 
             var appointments = await _context.Appointments
-                .Where(a => a.Children.UserId == customerId) // Make sure this is correct
-                .Include(a => a.Children) // Ensure children data is loaded
+                .Where(a => a.Children.UserId == customerId) 
+                .Include(a => a.Children)
                 .Include(a => a.Vaccine)
                 .Include(a => a.VaccinePackage)
                 .ThenInclude(vp => vp.VaccinePackageItems)
@@ -252,7 +258,7 @@ namespace SWP391.backend.services
 
             foreach (var appointment in appointments)
             {
-                if (appointment.VaccinePackageId.HasValue) // Gói vắc xin
+                if (appointment.VaccinePackageId.HasValue) 
                 {
                     var packageDto = new PackageVaccineAppointmentDTO
                     {
