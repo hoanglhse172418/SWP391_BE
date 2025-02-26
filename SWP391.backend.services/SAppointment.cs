@@ -22,15 +22,15 @@ namespace SWP391.backend.services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<SAppointment> _logger;
         private readonly IPayment _payment;
+
         enum Status
         {
             Pending,
-            Checked_In,
             Processing,
             Completed,
-            Waiting_Inject,
-            Injected,
-            Canceled
+            Canceled,
+            Not_Injected,
+            Injected
         }
         public SAppointment(swpContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SAppointment> logger, IPayment payment)
         {
@@ -132,7 +132,7 @@ namespace SWP391.backend.services
             // Cập nhật trạng thái
             if (!string.IsNullOrEmpty(dto.Status))
             {
-                // Nếu chuyển từ "Booked" sang "Confirmed" => Gọi service để tạo Payment
+                // Nếu chuyển từ "Pending" sang "Confirmed" => Gọi service để tạo Payment
                 if(appointment.Status == "Pending" && dto.Status == "Checked_In")
                 {
                     appointment.Status = dto.Status;
