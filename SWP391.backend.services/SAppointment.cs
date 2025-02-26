@@ -133,16 +133,16 @@ namespace SWP391.backend.services
             // Cập nhật trạng thái
             if (!string.IsNullOrEmpty(dto.Status))
             {
-                // Nếu chuyển từ "Pending" sang "Confirmed" => Gọi service để tạo Payment
-                if(appointment.Status == "Pending" && dto.Status == "Checked_In")
+                // Nếu chuyển từ "Pending" sang "Processing"
+                if(appointment.Status == "Pending" && dto.Status == "Processing")
                 {
                     appointment.Status = dto.Status;
                 }
-                if (appointment.Status == "Checked_In" && dto.Status == "Confirmed")
-                {
-                    appointment.Status = dto.Status;
 
-                    // Nếu lịch hẹn đã Confirmed, tạo Payment nếu chưa có
+
+                if (appointment.Status == "Processing")
+                {                    
+                    //Tạo Payment nếu chưa có
                     var paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
                     if (!paymentCreated) return false;
 
@@ -167,17 +167,43 @@ namespace SWP391.backend.services
                 }
             }
 
-            // Kiểm tra nếu lịch hẹn đã Confirmed và payment của nó đã được thanh toán
+            // Kiểm tra nếu lịch hẹn đang Processing và payment của nó đã được thanh toán
             var payment = await _context.Payments.FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
-            if (appointment.Status == "Confirmed" && payment != null && payment.PaymentStatus == "Paid")
+            if (appointment.Status == "Processing" && payment != null && payment.PaymentStatus == "Paid")
             {
                 appointment.Status = "Waiting Inject";
             }
+            
 
             appointment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }
+
+        //public async Task<bool> UpdateAppointmentStatusForDoctorAsync(int appointmentId, UpdateAppointmentDoctorDTO dto)
+        //{
+        //    var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+        //    if (appointment == null) return false;
+
+        //    // Chỉ cho phép cập nhật nếu lịch hẹn đang ở trạng thái "Waiting Inject"
+        //    if (appointment.Status == "Waiting Inject")
+        //    {
+        //        appointment.Status = "Injected";
+
+        //        // Nếu bác sĩ muốn cập nhật ngày tiêm cho lần tiếp theo
+        //        if (dto.NextInjectionDate.HasValue)
+        //        {
+        //            appointment.DateInjection = dto.NextInjectionDate.Value;
+        //        }
+
+        //        appointment.UpdatedAt = DateTime.UtcNow;
+        //        await _context.SaveChangesAsync();
+        //        return true;
+        //    }
+
+        //    return false; // Trả về false nếu không thể cập nhật (ví dụ: trạng thái không hợp lệ)
+        //}
+
 
         public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
         {
@@ -223,9 +249,9 @@ namespace SWP391.backend.services
 
         public async Task<List<TodayAppointmentDTO>> GetAppointmentsToday()
         {
-            var today = DateTime.UtcNow.Date;
+            var todayLocal = DateTime.UtcNow.AddHours(7).Date; // Chuyển đổi sang múi giờ địa phương
             var appointments = await _context.Appointments
-                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date == today)
+                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date == todayLocal)
                 .Include(a => a.Children)
                 .ToListAsync();
 
@@ -241,9 +267,10 @@ namespace SWP391.backend.services
 
         public async Task<List<FutureAppointmentDTO>> GetAppointmentsFuture()
         {
-            var today = DateTime.UtcNow.Date;
+            var todayLocal = DateTime.UtcNow.AddHours(7).Date; // Chuyển đổi sang múi giờ địa phương
+
             var appointments = await _context.Appointments
-                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date > today)
+                .Where(a => a.DateInjection.HasValue && a.DateInjection.Value.Date > todayLocal)
                 .Include(a => a.Children)
                 .ToListAsync();
 
@@ -256,6 +283,7 @@ namespace SWP391.backend.services
                 Status = a.Status
             }).ToList();
         }
+
 
         public async Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync()
         {
@@ -324,7 +352,7 @@ namespace SWP391.backend.services
 
         private int? GetCurrentUserId()
         {
-            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id"); // Phù hợp với claim trong SUser
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id");
             if (claim != null && int.TryParse(claim.Value, out int userId))
             {
                 return userId;
