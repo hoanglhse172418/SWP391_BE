@@ -220,7 +220,7 @@ namespace SWP391.backend.services
                 // Create new account
                 var newAccount = new User
                 {
-                    Fullname = request.Username,
+                    Fullname = request.Fullname,
                     Username = request.Username,
                     Email = request.Email,
                     Role = "doctor",
