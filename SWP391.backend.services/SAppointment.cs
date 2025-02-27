@@ -63,7 +63,7 @@ namespace SWP391.backend.services
                 Status = Status.Pending.ToString(),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Id=int.Parse("A" + new Random().Next(1000, 9999))
+                //Id=int.Parse("A" + new Random().Next(1000, 9999))
             };
 
             // Validate the selected vaccine or package exists
