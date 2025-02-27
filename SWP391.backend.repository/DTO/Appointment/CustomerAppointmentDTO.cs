@@ -12,6 +12,8 @@ public class SingleVaccineAppointmentDTO
     public string VaccineName { get; set; }
     public DateTime DateInjection { get; set; }
     public string Status { get; set; }
+
+    public DateTime AppointmentCreatedDate { get; set; }
 }
 
 // DTO cho lịch hẹn gói vắc xin
@@ -22,6 +24,7 @@ public class PackageVaccineAppointmentDTO
     public string? VaccinePackageName { get; set; }
     public DateTime DateInjection { get; set; }
     public string? Status { get; set; }
+    public DateTime AppointmentCreatedDate { get; set; }
     public List<FollowUpAppointmentDTO> FollowUpAppointments { get; set; } = new();
 }
 
