@@ -314,6 +314,7 @@ namespace SWP391.backend.services
                         ContactPhoneNumber = appointment.Children?.FatherPhoneNumber ?? "N/A",
                         VaccinePackageName = appointment.VaccinePackage?.Name ?? "Unknown Package",
                         DateInjection = appointment.DateInjection ?? DateTime.MinValue,
+                        AppointmentCreatedDate = appointment.CreatedAt ?? DateTime.MinValue,
                         Status = appointment.Status ?? "Unknown"
                     };
 
@@ -345,6 +346,7 @@ namespace SWP391.backend.services
                         ContactPhoneNumber = appointment.Children?.FatherPhoneNumber ?? "N/A",
                         VaccineName = appointment.Vaccine?.Name ?? "Unknown Vaccine",
                         DateInjection = appointment.DateInjection ?? DateTime.MinValue,
+                        AppointmentCreatedDate = appointment.CreatedAt ?? DateTime.MinValue,
                         Status = appointment.Status ?? "Unknown"
                     });
                 }
