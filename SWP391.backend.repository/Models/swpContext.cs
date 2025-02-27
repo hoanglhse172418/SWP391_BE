@@ -65,7 +65,23 @@ namespace SWP391.backend.repository.Models
 
                 entity.Property(e => e.DateInjection).HasColumnType("date");
 
+                entity.Property(e => e.DiseaseName)
+                    .HasMaxLength(255)
+                    .HasColumnName("diseaseName");
+
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
+
+                entity.Property(e => e.Name).HasMaxLength(255);
+
+                entity.Property(e => e.Phone)
+                    .HasMaxLength(255)
+                    .IsUnicode(false)
+                    .HasColumnName("phone");
+
+                entity.Property(e => e.ProcessStep)
+                    .HasMaxLength(255)
+                    .IsUnicode(false)
+                    .HasColumnName("processStep");
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(255)
