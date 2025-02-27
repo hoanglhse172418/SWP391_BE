@@ -21,6 +21,10 @@ namespace SWP391.backend.repository.Models
         public DateTime? UpdatedAt { get; set; }
         public int? RoomId { get; set; }
         public DateTime? DateInjection { get; set; }
+        public string? Name { get; set; }
+        public string? Phone { get; set; }
+        public string? ProcessStep { get; set; }
+        public string? DiseaseName { get; set; }
 
         public virtual Child? Children { get; set; }
         public virtual Room? Room { get; set; }
