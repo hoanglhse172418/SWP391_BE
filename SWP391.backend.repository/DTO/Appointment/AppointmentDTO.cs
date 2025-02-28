@@ -32,6 +32,7 @@ namespace SWP391.backend.repository.DTO.Appointment
         public string? VaccineName { get; set; } // Tên vắc xin hoặc tên gói
         public DateTime DateInjection { get; set; }
         public string? Status { get; set; }
+        public string? ProcessStep { get; set; }
         public int? DoctorId { get; set; }
         public int? RoomId { get; set; }
     }
@@ -54,16 +55,17 @@ namespace SWP391.backend.repository.DTO.Appointment
         public string Status { get; set; }
     }
 
-    public class UpdateAppointmentDTO
+    public class UpdateAppointmentStatusDTO
     {
         public string? Status { get; set; }
-        public string? DoctorName { get; set; }
-        public string? RoomNumber { get; set; }
+        public string? ProcessStep { get; set; }
     }
 
-    public class UpdateAppointmentDoctorDTO
+    public class EditAppointmentDetailDTO
     {
-        public string? Status { get; set; }
-        //public DateTime? NextInjectionDate { get; set; }
+        public int VaccineId { get; set; }
+        public string? VaccineType { get; set; }
+        public int DoctorId { get; set; }
+        public int RoomId { get;set; }
     }
 }

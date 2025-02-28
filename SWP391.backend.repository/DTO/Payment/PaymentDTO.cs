@@ -15,7 +15,6 @@ namespace SWP391.backend.repository.DTO.Payment
         public string PaymentMethod { get; set; }
         public string PaymentStatus { get; set; }
         public string InjectionProcessStatus { get; set; }
-
         public List<VaccineDetailDTO> Vaccines { get; set; }
     }
 

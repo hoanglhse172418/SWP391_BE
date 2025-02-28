@@ -23,18 +23,10 @@ namespace SWP391.backend.services
             var appointment = await _context.Appointments
                 .Include(a => a.Vaccine)
                 .Include(a => a.VaccinePackage)
+                .ThenInclude(a => a.VaccinePackageItems)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
             if (appointment == null) return false;
-
-            // Kiểm tra nếu Payment đã tồn tại
-            if(appointment.Status == "Confirmed")
-            {
-                if (await _context.Payments.AnyAsync(p => p.AppointmentId == appointmentId))
-                {
-                    return false; // Payment đã tồn tại, không cần tạo mới
-                }
-            }
 
             var payment = new Payment
             {
@@ -47,10 +39,46 @@ namespace SWP391.backend.services
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
+
+
+            if(appointment.Type == "Single")
+            {
+                var paymentDetail = new PaymentDetail
+                {
+                    PaymentId = payment.Id,
+                    VaccineId = appointment.VaccineId,
+                    DoseNumber = 1,
+                    DoseRemaining = 1,
+                    PricePerDose = decimal.Parse(appointment.Vaccine.Price),
+                };
+                _context.PaymentDetails.Add(paymentDetail);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var packageItemDetail = new List<PaymentDetail>();
+
+                Console.WriteLine(appointment.VaccinePackage.VaccinePackageItems);
+                foreach(VaccinePackageItem vpi in appointment.VaccinePackage.VaccinePackageItems)
+                {
+
+                    var paymentDetail = new PaymentDetail
+                    {
+                        PaymentId = payment.Id,
+                        VaccineId = vpi.VaccineId,
+                        DoseNumber= vpi.DoseNumber,
+                        DoseRemaining = vpi.DoseNumber,
+                        PricePerDose = vpi.PricePerDose
+                    };
+                    packageItemDetail.Add(paymentDetail);
+                }
+                _context.PaymentDetails.AddRange(packageItemDetail);
+                await _context.SaveChangesAsync();
+            }
             return true;
         }
 
-        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId, string status)
+        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId)
         {
             var payment = await _context.Payments
                 .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
@@ -61,8 +89,13 @@ namespace SWP391.backend.services
             if (payment.PaymentStatus == "Paid")
                 return false; // Trạng thái đã là Paid, không cần cập nhật
 
-            payment.PaymentStatus = status;
+            payment.PaymentStatus = "Paid";
 
+            var a = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
+            if(a == null) return false;
+            a.ProcessStep = "Payment Paid";
+
+            _context.Appointments.Update(a);
             _context.Payments.Update(payment);
             await _context.SaveChangesAsync();
             return true;

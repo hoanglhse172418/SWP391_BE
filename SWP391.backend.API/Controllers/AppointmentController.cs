@@ -119,19 +119,21 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
-        [HttpPut("update-appointment-staff")]
-        public async Task<IActionResult> UpdateAppointmentForStaff(int id, [FromBody] UpdateAppointmentDTO dto)
+
+
+        [HttpPut("update-status-by-staff/step-2-to-3")]
+        public async Task<IActionResult> UpdateAppointmentForStaff(int id, [FromBody] EditAppointmentDetailDTO dto)
         {
-            var result = await this.a.UpdateAppointmentForStaffAsync(id, dto);
+            var result = await this.a.ConfirmAppointmentAsync(id, dto);
             if (!result) return BadRequest("Cannot update appointment");
 
             return Ok(new { message = "Appointment updated successfully" });
         }
 
-        [HttpPut("update-appointment-doctor")]
-        public async Task<IActionResult> UpdateAppointmentForDoctor(int id, [FromBody] UpdateAppointmentDoctorDTO dto)
+        [HttpPut("update-status-by-doctor")]
+        public async Task<IActionResult> UpdateAppointmentForDoctor(int id)
         {
-            var result = await this.a.UpdateAppointmentForDoctorAsync(id, dto);
+            var result = await this.a.UpdateAppointmentForDoctorAsync(id);
             if (!result) return BadRequest("Cannot update appointment");
 
             return Ok(new { message = "Appointment updated successfully" });
