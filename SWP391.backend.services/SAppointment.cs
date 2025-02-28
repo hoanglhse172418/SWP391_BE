@@ -50,17 +50,18 @@ namespace SWP391.backend.services
             }
 
             var child = _context.Children.FirstOrDefault(c => c.ChildrenFullname == dto.ChildFullName);
-
             var appointment = new Appointment
             {
                 ChildrenId = child?.Id,
                 Type = dto.VaccineType == "Single" ? "Single" : "Package",
+                DiseaseName = dto.VaccineType == "Single" ? dto.DiaseaseName : "N/A",
                 VaccineId = dto.VaccineType == "Single" ? dto.SelectedVaccineId : null,
                 VaccinePackageId = dto.VaccineType == "Package" ? dto.SelectedVaccinePackageId : null,
                 RoomId = null,
                 DoctorId = null,
                 DateInjection = dto.AppointmentDate,
-                Status = Status.Pending.ToString(),
+                Status = "Pending",
+                ProcessStep = "Booking",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 //Id=int.Parse("A" + new Random().Next(1000, 9999))
@@ -88,12 +89,14 @@ namespace SWP391.backend.services
                 Id = appointment.Id,
                 ChildrenId = appointment.ChildrenId,
                 Type = appointment.Type,
+                DiaseaseName = appointment.DiseaseName,
                 VaccineId = appointment.VaccineId,
                 VaccinePackageId = appointment.VaccinePackageId,
                 DoctorId = appointment.DoctorId,
                 RoomId = appointment.RoomId,
                 DateInjection = appointment.DateInjection,
                 Status = appointment.Status,
+                ProcessStep = appointment.ProcessStep,
                 CreatedAt = appointment.CreatedAt,
                 UpdatedAt = appointment.UpdatedAt
             };
@@ -222,9 +225,11 @@ namespace SWP391.backend.services
                 ChildrenId = a.ChildrenId,
                 VaccinePackageId = a.VaccinePackageId,
                 DoctorId = a.DoctorId,
+                DiaseaseName = a.DiseaseName,
                 VaccineId = a.VaccineId,
                 Type = a.Type,
                 Status = a.Status,
+                ProcessStep = a.ProcessStep,
                 CreatedAt = a.CreatedAt,
                 UpdatedAt = a.UpdatedAt,
                 RoomId = a.RoomId,
@@ -239,11 +244,13 @@ namespace SWP391.backend.services
             {
                 Id = a.Id,
                 ChildrenId = a.ChildrenId,
+                DiaseaseName = a.DiseaseName,
                 VaccinePackageId = a.VaccinePackageId,
                 DoctorId = a.DoctorId,
                 VaccineId = a.VaccineId,
                 Type = a.Type,
                 Status = a.Status,
+                ProcessStep = a.ProcessStep,
                 CreatedAt = a.CreatedAt,
                 UpdatedAt = a.UpdatedAt,
                 RoomId = a.RoomId,
@@ -344,10 +351,12 @@ namespace SWP391.backend.services
                     {
                         ChildFullName = appointment.Children?.ChildrenFullname ?? "N/A",
                         ContactPhoneNumber = appointment.Children?.FatherPhoneNumber ?? "N/A",
+                        DiaseaseName = appointment.DiseaseName ?? "N/A",
                         VaccineName = appointment.Vaccine?.Name ?? "Unknown Vaccine",
                         DateInjection = appointment.DateInjection ?? DateTime.MinValue,
                         AppointmentCreatedDate = appointment.CreatedAt ?? DateTime.MinValue,
-                        Status = appointment.Status ?? "Unknown"
+                        Status = appointment.Status ?? "Unknown",
+                        ProcessStep = appointment.ProcessStep ?? "Unknown"
                     });
                 }
             }

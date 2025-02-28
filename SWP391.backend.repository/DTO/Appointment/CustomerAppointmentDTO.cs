@@ -9,10 +9,11 @@ public class SingleVaccineAppointmentDTO
 {
     public string ChildFullName { get; set; }
     public string ContactPhoneNumber { get; set; }
+    public string DiaseaseName { get; set; }
     public string VaccineName { get; set; }
     public DateTime DateInjection { get; set; }
     public string Status { get; set; }
-
+    public string ProcessStep { get; set; }
     public DateTime AppointmentCreatedDate { get; set; }
 }
 
