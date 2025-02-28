@@ -13,6 +13,7 @@ namespace SWP391.backend.api.Controllers
             this.p = p;
         }
 
+
         [HttpGet("detail/{appointmentId}")]
         public async Task<IActionResult> GetPaymentDetail(int appointmentId)
         {
@@ -24,17 +25,16 @@ namespace SWP391.backend.api.Controllers
             return Ok(result);
         }
 
-
-        [HttpPut("update-status/{appointmentId}")]
-        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId, string status)
+        //Gọi khi từ bước 3 sang 4
+        [HttpPut("update-status-payment-status/step-3-to-4/{appointmentId}")]
+        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId)
         {
-            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId, status);
+            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId);
 
             if (!result)
             {
                 return BadRequest("Payment update failed. Either the appointment does not exist, or the payment is already marked as Paid.");
             }
-
             return Ok("Payment status updated to Paid successfully.");
         }
     }

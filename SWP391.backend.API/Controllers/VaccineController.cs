@@ -82,5 +82,23 @@ namespace SWP391.backend.api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("get-vaccines-by-diasease-name/{diseaseName}")]
+        public async Task<IActionResult> GetVaccinesByDisease(string diseaseName)
+        {
+            try
+            {
+                var vaccines = await v.GetAllVaccinesByDiasease(diseaseName);
+                if (vaccines == null || vaccines.Count == 0)
+                {
+                    return NotFound($"No vaccines found for disease: {diseaseName}");
+                }
+                return Ok(vaccines);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }

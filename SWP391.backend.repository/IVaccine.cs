@@ -15,5 +15,6 @@ namespace SWP391.backend.repository
         Task<Vaccine> GetById(int id);
         Task<Vaccine> Create(CreateVaccineDTO request, string imageUrl);
         Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request, string imageUrl);
+        Task<List<Vaccine>> GetAllVaccinesByDiasease(string diaseaseName);
     }
 }

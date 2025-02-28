@@ -103,5 +103,25 @@ namespace SWP391.backend.services
                 throw new Exception($"Error update vaccine: {ex.Message}", ex);
             }
         }
+
+        public async Task<List<Vaccine>> GetAllVaccinesByDiasease(string diaseaseName)
+        {
+            try
+            {
+                // Tìm disease theo tên và lấy danh sách vaccine liên quan
+                var disease = await context.Diseases
+                    .Include(d => d.Vaccines)
+                    .FirstOrDefaultAsync(d => d.Name == diaseaseName);
+
+                
+
+                // Trả về danh sách vaccine hoặc danh sách rỗng nếu không tìm thấy disease
+                return disease?.Vaccines.ToList() ?? new List<Vaccine>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving vaccines: {ex.Message}", ex);
+            }
+        }
     }
 }
