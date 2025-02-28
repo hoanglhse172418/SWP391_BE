@@ -12,9 +12,11 @@ namespace SWP391.backend.repository.DTO.Appointment
         public int? ChildrenId { get; set; }
         public int? VaccinePackageId { get; set; }
         public int? DoctorId { get; set; }
+        public string? DiaseaseName { get; set; }
         public int? VaccineId { get; set; }
         public string? Type { get; set; }
         public string? Status { get; set; }
+        public string? ProcessStep { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public int? RoomId { get; set; }

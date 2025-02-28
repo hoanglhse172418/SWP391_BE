@@ -12,6 +12,7 @@ namespace SWP391.backend.repository.DTO.Appointment
         public string ContactFullName { get; set; }
         public string ContactPhoneNumber { get; set; }
         public string VaccineType { get; set; }
+        public string DiaseaseName { get; set; }
         public int? SelectedVaccineId { get; set; }
         public int? SelectedVaccinePackageId { get; set; }
         public DateTime AppointmentDate { get; set; }
