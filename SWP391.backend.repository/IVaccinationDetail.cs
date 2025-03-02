@@ -13,7 +13,7 @@ namespace SWP391.backend.repository
     {
         Task<List<VaccinationDetail>> GetAll(GetAllDTO request);
         Task<VaccinationDetail> Create(CreateVaccinationDetailDTO request);
-        Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request);
+        //Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request);
         Task<VaccinationDetail> GetById(int id);
         Task<bool> Delete(int id);
     }
