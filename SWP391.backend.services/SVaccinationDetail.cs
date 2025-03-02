@@ -110,24 +110,20 @@ namespace SWP391.backend.services
                 }
 
                 // Lấy thông tin VaccineTemplate
-                var template = await context.VaccineTemplates.FindAsync(request.VaccinationTemplateId);
+                var template = await context.VaccineTemplates
+                    .FirstOrDefaultAsync(vt => vt.DiseaseId == request.DiseaseId);
+
                 if (template == null)
                 {
                     throw new Exception("Vaccine template not found.");
                 }
 
-                // Tính ngày tiêm dự kiến (ExpectedInjectionDate)
+                // Xác định ngày tiêm dự kiến (ExpectedInjectionDate) dựa trên template.Month
                 DateTime expectedInjectionDate = child.Dob ?? DateTime.UtcNow;
 
-                if (template.Month.HasValue && template.Month == 0)
+                if (template.Month.HasValue)
                 {
-                    // Nếu Month = 0 (tiêm ngay khi sinh), ExpectedInjectionDate = DOB
-                    expectedInjectionDate = child.Dob.Value;
-                }
-                else if (template.Month.HasValue)
-                {
-                    // Nếu có Month > 0, cộng thêm số tháng vào DOB
-                    expectedInjectionDate = expectedInjectionDate.AddMonths(template.Month.Value);
+                    expectedInjectionDate = child.Dob.Value.AddMonths(template.Month.Value);
                 }
                 else if (!string.IsNullOrEmpty(template.AgeRange))
                 {
@@ -135,13 +131,28 @@ namespace SWP391.backend.services
                     if (template.AgeRange.Contains("tháng"))
                     {
                         int months = int.Parse(template.AgeRange.Replace(" tháng", "").Trim());
-                        expectedInjectionDate = expectedInjectionDate.AddMonths(months);
+                        expectedInjectionDate = child.Dob.Value.AddMonths(months);
                     }
                     else if (template.AgeRange.Contains("năm"))
                     {
                         int years = int.Parse(template.AgeRange.Replace(" năm", "").Trim());
-                        expectedInjectionDate = expectedInjectionDate.AddYears(years);
+                        expectedInjectionDate = child.Dob.Value.AddYears(years);
                     }
+                }
+
+                // Chuyển đổi tháng từ DTO sang số nguyên (nếu có) - đây là tháng mà người dùng nhập
+                if (!int.TryParse(request.month, out int actualMonth))
+                {
+                    throw new Exception("Invalid month format.");
+                }
+
+                // Xác định ngày tiêm thực tế (ActualInjectionDate) dựa trên tháng người dùng nhập
+                DateTime actualInjectionDate = child.Dob.Value.AddMonths(actualMonth);
+
+                // Kiểm tra nếu ngày tiêm thực tế < ngày tiêm dự kiến thì báo lỗi
+                if (actualInjectionDate < expectedInjectionDate)
+                {
+                    throw new Exception("Actual injection date must be equal or greater than expected injection date.");
                 }
 
                 // Tạo VaccinationDetail
@@ -151,16 +162,10 @@ namespace SWP391.backend.services
                     DiseaseId = request.DiseaseId,
                     VaccineId = request.VaccineId,
                     ExpectedInjectionDate = expectedInjectionDate,
-                    ActualInjectionDate = request.ActualInjectionDate
+                    ActualInjectionDate = actualInjectionDate
                 };
 
-                // if acctual date is not equal or gretter than expected date
-                if (vaccinationDetail.ActualInjectionDate.HasValue && vaccinationDetail.ActualInjectionDate.Value.Date < vaccinationDetail.ExpectedInjectionDate.Value.Date)
-                {
-                    throw new Exception("Actual injection date must be equal or greater than expected injection date.");
-                }
-
-                // Thêm vào database
+                // Lưu vào database
                 context.VaccinationDetails.Add(vaccinationDetail);
                 await context.SaveChangesAsync();
 
@@ -172,40 +177,40 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
-        {
-            var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
-            if (vaccinationDetail == null)
-            {
-                throw new Exception("Vaccination detail not found.");
-            }
+        //public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
+        //{
+        //    var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
+        //    if (vaccinationDetail == null)
+        //    {
+        //        throw new Exception("Vaccination detail not found.");
+        //    }
 
-            // Update Disease and Vaccine IDs
-            if (request.DiseaseId.HasValue)
-                vaccinationDetail.DiseaseId = request.DiseaseId;
+        //    // Update Disease and Vaccine IDs
+        //    if (request.DiseaseId.HasValue)
+        //        vaccinationDetail.DiseaseId = request.DiseaseId;
 
-            if (request.VaccineId.HasValue)
-                vaccinationDetail.VaccineId = request.VaccineId;
+        //    if (request.VaccineId.HasValue)
+        //        vaccinationDetail.VaccineId = request.VaccineId;
 
-            // Update Expected Injection Date
-            if (request.ExpectedInjectionDate.HasValue)
-                vaccinationDetail.ExpectedInjectionDate = request.ExpectedInjectionDate.HasValue ? request.ExpectedInjectionDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null;
+        //    // Update Expected Injection Date
+        //    if (request.ExpectedInjectionDate.HasValue)
+        //        vaccinationDetail.ExpectedInjectionDate = request.ExpectedInjectionDate.HasValue ? request.ExpectedInjectionDate.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null;
 
-            // Ensure ActualInjectionDate is not earlier than ExpectedInjectionDate
-            if (request.ActualInjectionDate.HasValue)
-            {
-                var actualInjectionDateTime = request.ActualInjectionDate.Value.ToDateTime(TimeOnly.MinValue);
-                if (vaccinationDetail.ExpectedInjectionDate.HasValue &&
-                    actualInjectionDateTime < vaccinationDetail.ExpectedInjectionDate.Value)
-                {
-                    throw new Exception("Actual injection date cannot be earlier than the expected injection date.");
-                }
-                vaccinationDetail.ActualInjectionDate = actualInjectionDateTime;
-            }
+        //    // Ensure ActualInjectionDate is not earlier than ExpectedInjectionDate
+        //    if (request.ActualInjectionDate.HasValue)
+        //    {
+        //        var actualInjectionDateTime = request.ActualInjectionDate.Value.ToDateTime(TimeOnly.MinValue);
+        //        if (vaccinationDetail.ExpectedInjectionDate.HasValue &&
+        //            actualInjectionDateTime < vaccinationDetail.ExpectedInjectionDate.Value)
+        //        {
+        //            throw new Exception("Actual injection date cannot be earlier than the expected injection date.");
+        //        }
+        //        vaccinationDetail.ActualInjectionDate = actualInjectionDateTime;
+        //    }
 
-            await context.SaveChangesAsync();
-            return vaccinationDetail;
-        }
+        //    await context.SaveChangesAsync();
+        //    return vaccinationDetail;
+        //}
 
         public async Task<VaccinationDetail> GetById(int id)
         {

@@ -35,6 +35,10 @@ namespace SWP391.backend.services
                 {
                     switch (request.FilterOn.ToLower())
                     {
+                        case "diseaseid":
+                            if (int.TryParse(request.FilterQuery, out var diseaseId))
+                                query = query.Where(v => v.DiseaseId.HasValue && v.DiseaseId.Value == diseaseId);
+                            break;
                         case "description":
                             query = query.Where(v => v.Description != null && v.Description.Contains(request.FilterQuery));
                             break;
@@ -86,15 +90,15 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<VaccineTemplate> Create(CreateVaccineTemplateDTO request)
+        public async Task<List<VaccineTemplate>> Create(CreateVaccineTemplateDTO request)
         {
             try
             {
                 if (request == null)
                     throw new ArgumentNullException(nameof(request), "Request cannot be null.");
 
-                if (request.DiseaseId == null || request.DiseaseId <= 0)
-                    throw new ArgumentException("DiseaseId must be a valid positive number.");
+                if (request.DiseaseId == null || !request.DiseaseId.Any())
+                    throw new ArgumentException("DiseaseId must contain at least one valid ID.");
 
                 if (request.DoseNumber != null && request.DoseNumber <= 0)
                     throw new ArgumentException("DoseNumber must be a positive integer.");
@@ -102,26 +106,35 @@ namespace SWP391.backend.services
                 if (request.Month != null && request.Month < 0)
                     throw new ArgumentException("Month cannot be negative.");
 
-                // Check if the disease exists in the database
-                var existingDisease = await context.Diseases.FindAsync(request.DiseaseId);
-                if (existingDisease == null)
-                    throw new InvalidOperationException("DiseaseId does not exist.");
+                // Lấy danh sách Disease hợp lệ từ database
+                var existingDiseases = await context.Diseases
+                    .Where(d => request.DiseaseId.Contains(d.Id))
+                    .ToListAsync();
 
-                // Create new VaccineTemplate
-                var newVaccineTemplate = new VaccineTemplate
+                if (existingDiseases.Count != request.DiseaseId.Count)
+                    throw new InvalidOperationException("One or more DiseaseId do not exist.");
+
+                var vaccineTemplates = new List<VaccineTemplate>();
+
+                foreach (var disease in existingDiseases)
                 {
-                    DiseaseId = request.DiseaseId,
-                    Description = request.Description?.Trim(),
-                    Month = request.Month,
-                    AgeRange = request.AgeRange?.Trim(),
-                    DoseNumber = request.DoseNumber,
-                    Notes = request.Notes?.Trim()
-                };
+                    var newVaccineTemplate = new VaccineTemplate
+                    {
+                        DiseaseId = disease.Id,
+                        Description = request.Description?.Trim(),
+                        Month = request.Month,
+                        AgeRange = request.AgeRange?.Trim(),
+                        DoseNumber = request.DoseNumber,
+                        Notes = request.Notes?.Trim()
+                    };
 
-                await context.VaccineTemplates.AddAsync(newVaccineTemplate);
+                    vaccineTemplates.Add(newVaccineTemplate);
+                }
+
+                await context.VaccineTemplates.AddRangeAsync(vaccineTemplates);
                 await context.SaveChangesAsync();
 
-                return newVaccineTemplate;
+                return vaccineTemplates;
             }
             catch (Exception ex)
             {

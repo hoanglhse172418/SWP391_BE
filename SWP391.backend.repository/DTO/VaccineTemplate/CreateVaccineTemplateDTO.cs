@@ -8,7 +8,7 @@ namespace SWP391.backend.repository.DTO.VaccineTemplate
 {
     public class CreateVaccineTemplateDTO
     {
-        public int? DiseaseId { get; set; }
+        public List<int>? DiseaseId { get; set; }
         public string? Description { get; set; }
         public int? Month { get; set; }
         public string? AgeRange { get; set; }

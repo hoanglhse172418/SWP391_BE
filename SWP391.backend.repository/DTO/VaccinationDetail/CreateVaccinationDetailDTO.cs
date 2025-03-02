@@ -8,11 +8,9 @@ namespace SWP391.backend.repository.DTO.VaccinationDetail
 {
     public class CreateVaccinationDetailDTO
     {
-
         public int ChildrenId { get; set; }
-        public int VaccinationTemplateId { get; set; }
         public int DiseaseId { get; set; }
         public int VaccineId { get; set; }
-        public DateTime? ActualInjectionDate { get; set; }
+        public string month { get; set; }
     }
 }

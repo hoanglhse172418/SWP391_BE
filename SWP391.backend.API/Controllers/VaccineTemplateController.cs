@@ -33,7 +33,7 @@ namespace SWP391.backend.api.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> Create(CreateVaccineTemplateDTO request)
+        public async Task<IActionResult> Create([FromForm]CreateVaccineTemplateDTO request)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace SWP391.backend.api.Controllers
 
         [HttpPut]
         [Route("update/{id}")]
-        public async Task<IActionResult> Update(int id, UpdateVaccineTemplateDTO request)
+        public async Task<IActionResult> Update(int id,  UpdateVaccineTemplateDTO request)
         {
             try
             {

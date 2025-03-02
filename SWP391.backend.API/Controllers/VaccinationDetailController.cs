@@ -44,20 +44,20 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
-        [HttpPut]
-        [Route("update/{Id}")]
-        public async Task<IActionResult> Update(int Id, UpdateVaccinationDetailDTO vaccinationDetail)
-        {
-            try
-            {
-                var a = await this.vd.Update(Id, vaccinationDetail);
-                return Ok(a);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+        //[HttpPut]
+        //[Route("update/{Id}")]
+        //public async Task<IActionResult> Update(int Id, UpdateVaccinationDetailDTO vaccinationDetail)
+        //{
+        //    try
+        //    {
+        //        var a = await this.vd.Update(Id, vaccinationDetail);
+        //        return Ok(a);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
 
         [HttpGet]
         [Route("get-by-id/{Id}")]
