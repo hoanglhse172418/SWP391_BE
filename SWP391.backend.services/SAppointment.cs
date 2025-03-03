@@ -157,8 +157,9 @@ namespace SWP391.backend.services
             if (appointment == null) return false;
 
             appointment.ProcessStep = "Injected";
-            appointment.UpdatedAt = DateTime.UtcNow;
             appointment.Status = "Completed";
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
             return true; 
         }
         public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
