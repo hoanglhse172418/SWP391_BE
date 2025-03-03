@@ -7,6 +7,7 @@ namespace SWP391.backend.repository.Models
     {
         public Appointment()
         {
+            PaymentDetails = new HashSet<PaymentDetail>();
             Payments = new HashSet<Payment>();
         }
 
@@ -30,6 +31,7 @@ namespace SWP391.backend.repository.Models
         public virtual Room? Room { get; set; }
         public virtual Vaccine? Vaccine { get; set; }
         public virtual VaccinePackage? VaccinePackage { get; set; }
+        public virtual ICollection<PaymentDetail> PaymentDetails { get; set; }
         public virtual ICollection<Payment> Payments { get; set; }
     }
 }

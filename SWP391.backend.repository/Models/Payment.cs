@@ -16,6 +16,7 @@ namespace SWP391.backend.repository.Models
         public string? PaymentMethod { get; set; }
         public string? PaymentStatus { get; set; }
         public string? InjectionProcessStatus { get; set; }
+        public string? TransactionId { get; set; }
 
         public virtual Appointment? Appointment { get; set; }
         public virtual ICollection<PaymentDetail> PaymentDetails { get; set; }
