@@ -7,6 +7,7 @@
 // DTO cho lịch hẹn vắc xin lẻ
 public class SingleVaccineAppointmentDTO
 {
+    public int Id { get; set; }
     public string ChildFullName { get; set; }
     public string ContactPhoneNumber { get; set; }
     public string DiaseaseName { get; set; }

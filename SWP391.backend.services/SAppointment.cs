@@ -301,6 +301,7 @@ namespace SWP391.backend.services
                 {
                     responseDto.SingleVaccineAppointments.Add(new SingleVaccineAppointmentDTO
                     {
+                        Id = appointment.Id,
                         ChildFullName = appointment.Children?.ChildrenFullname ?? "N/A",
                         ContactPhoneNumber = appointment.Phone ?? "N/A",
                         DiaseaseName = appointment.DiseaseName ?? "N/A",
