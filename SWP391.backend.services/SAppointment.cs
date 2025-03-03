@@ -260,6 +260,7 @@ namespace SWP391.backend.services
 
             var responseDto = new CustomerAppointmentsDTO();
 
+            //Vắc xin gói
             foreach (var appointment in appointments)
             {
                 if (appointment.VaccinePackageId.HasValue) 
