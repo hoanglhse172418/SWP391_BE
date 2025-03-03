@@ -31,7 +31,7 @@ namespace SWP391.backend.services
             var payment = new Payment
             {
                 AppointmentId = appointment.Id,
-                TotalPrice = CalculateTotalPrice(appointment),
+                //TotalPrice = CalculateTotalPrice(appointment),
                 PaymentMethod = "Cash",
                 PaymentStatus = "Not paid",
                 InjectionProcessStatus = "Not Started"
@@ -52,6 +52,8 @@ namespace SWP391.backend.services
                     PricePerDose = decimal.Parse(appointment.Vaccine.Price),
                 };
                 _context.PaymentDetails.Add(paymentDetail);
+                await _context.SaveChangesAsync();
+                payment.TotalPrice = CalculateTotalPrice(appointment);
                 await _context.SaveChangesAsync();
             }
             else
