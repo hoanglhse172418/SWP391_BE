@@ -93,7 +93,7 @@ namespace SWP391.backend.services
 
             var a = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
             if(a == null) return false;
-            a.ProcessStep = "Payment Paid";
+            a.ProcessStep = "Waiting Inject";
 
             _context.Appointments.Update(a);
             _context.Payments.Update(payment);
