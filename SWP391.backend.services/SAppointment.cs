@@ -159,7 +159,7 @@ namespace SWP391.backend.services
             appointment.ProcessStep = "Injected";
             appointment.UpdatedAt = DateTime.UtcNow;
             appointment.Status = "Completed";
-            return false; // Nếu trạng thái không hợp lệ, trả về false
+            return true; 
         }
         public async Task<List<AppointmentDTO>> GetAppointmentByChildId(int Id)
         {
