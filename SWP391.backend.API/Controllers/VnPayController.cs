@@ -71,7 +71,7 @@ namespace SWP391.backend.api.Controllers
                     pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"] ?? throw new ArgumentNullException("Vnpay:Version"));
                     pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"] ?? throw new ArgumentNullException("Vnpay:Command"));
                     pay.AddRequestData("vnp_TmnCode", tmnCode);
-                    pay.AddRequestData("vnp_Amount", ((decimal)payment.TotalPrice!.Value * 10).ToString()); // Số tiền cần thanh toán
+                    pay.AddRequestData("vnp_Amount", ((decimal)payment.TotalPrice!.Value * 100).ToString()); // Số tiền cần thanh toán
                     pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
                     pay.AddRequestData("vnp_CurrCode", currCode);
                     pay.AddRequestData("vnp_IpAddr", ip);

@@ -73,6 +73,8 @@ namespace SWP391.backend.repository.Models
 
                 entity.Property(e => e.Name).HasMaxLength(255);
 
+                entity.Property(e => e.PaymentId).HasColumnName("paymentId");
+
                 entity.Property(e => e.Phone)
                     .HasMaxLength(255)
                     .IsUnicode(false)
@@ -105,6 +107,11 @@ namespace SWP391.backend.repository.Models
                     .HasForeignKey(d => d.ChildrenId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK__Appointme__child__04E4BC85");
+
+                entity.HasOne(d => d.Payment)
+                    .WithMany(p => p.Appointments)
+                    .HasForeignKey(d => d.PaymentId)
+                    .HasConstraintName("FK_Appointment_Payment");
 
                 entity.HasOne(d => d.Room)
                     .WithMany(p => p.Appointments)
@@ -207,11 +214,9 @@ namespace SWP391.backend.repository.Models
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
-                entity.Property(e => e.AppointmentId).HasColumnName("appointment_id");
-
-                entity.Property(e => e.InjectionProcessStatus)
+                entity.Property(e => e.PackageProcessStatus)
                     .HasMaxLength(255)
-                    .HasColumnName("injection_process_status");
+                    .HasColumnName("package_process_status");
 
                 entity.Property(e => e.PaymentMethod)
                     .HasMaxLength(255)
@@ -228,12 +233,6 @@ namespace SWP391.backend.repository.Models
                 entity.Property(e => e.TransactionId)
                     .HasMaxLength(500)
                     .HasColumnName("transactionID");
-
-                entity.HasOne(d => d.Appointment)
-                    .WithMany(p => p.Payments)
-                    .HasForeignKey(d => d.AppointmentId)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .HasConstraintName("FK__Payment__appoint__09A971A2");
             });
 
             modelBuilder.Entity<PaymentDetail>(entity =>
@@ -241,8 +240,6 @@ namespace SWP391.backend.repository.Models
                 entity.ToTable("PaymentDetail");
 
                 entity.Property(e => e.Id).HasColumnName("id");
-
-                entity.Property(e => e.AppointmentId).HasColumnName("AppointmentID");
 
                 entity.Property(e => e.DoseNumber).HasColumnName("dose_number");
 
@@ -255,11 +252,6 @@ namespace SWP391.backend.repository.Models
                     .HasColumnName("price_per_dose");
 
                 entity.Property(e => e.VaccineId).HasColumnName("vaccine_id");
-
-                entity.HasOne(d => d.Appointment)
-                    .WithMany(p => p.PaymentDetails)
-                    .HasForeignKey(d => d.AppointmentId)
-                    .HasConstraintName("FK_PaymentDetails_Appointment");
 
                 entity.HasOne(d => d.Payment)
                     .WithMany(p => p.PaymentDetails)
