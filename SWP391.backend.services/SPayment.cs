@@ -2,6 +2,7 @@
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO.Payment;
 using SWP391.backend.repository.Models;
+using SWP391.backend.repository.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace SWP391.backend.services
             _context = context;
         }
 
+        //Tạo payment
         public async Task<bool> CreatePaymentForAppointment(int appointmentId)
         {
             var appointment = await _context.Appointments
@@ -28,21 +30,18 @@ namespace SWP391.backend.services
 
             if (appointment == null) return false;
 
-            var payment = new Payment
+            //Xử lý cho vắc xin lẻ
+            if (appointment.Type == "Single")
             {
-                AppointmentId = appointment.Id,
-                //TotalPrice = CalculateTotalPrice(appointment),
-                PaymentMethod = "Cash",
-                PaymentStatus = "Not paid",
-                InjectionProcessStatus = "Not Started"
-            };
+                // Tạo payment cho lịch hẹn vắc xin lẻ
+                var payment = new Payment
+                {
+                    PaymentStatus = PaymentStatusEnum.NotPaid,
+                    PackageProcessStatus = "NotComplete"
+                };
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
 
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
-
-
-            if(appointment.Type == "Single")
-            {
                 var paymentDetail = new PaymentDetail
                 {
                     PaymentId = payment.Id,
@@ -53,54 +52,101 @@ namespace SWP391.backend.services
                 };
                 _context.PaymentDetails.Add(paymentDetail);
                 await _context.SaveChangesAsync();
-                payment.TotalPrice = CalculateTotalPrice(appointment);
+
+                payment.TotalPrice = paymentDetail.PricePerDose * paymentDetail.DoseNumber;
                 await _context.SaveChangesAsync();
+
+                // Cập nhật PaymentId cho lịch hẹn
+                appointment.PaymentId = payment.Id;
+                await _context.SaveChangesAsync();
+
+                return true;
             }
+
             else
             {
-                var packageItemDetail = new List<PaymentDetail>();
+                // Kiểm tra xem có Payment nào cho cùng gói & đứa trẻ này không
+                var existingPaymentId = await _context.Appointments
+                    .Where(a => a.VaccinePackageId == appointment.VaccinePackageId
+                                && a.ChildrenId == appointment.ChildrenId
+                                && a.PaymentId != null)
+                    .Select(a => a.PaymentId)
+                    .FirstOrDefaultAsync();
 
-                Console.WriteLine(appointment.VaccinePackage.VaccinePackageItems);
-                foreach(VaccinePackageItem vpi in appointment.VaccinePackage.VaccinePackageItems)
+                int paymentId;
+
+
+                //Nếu đã tồn tại Payment, trả về false
+                if (existingPaymentId.HasValue) return false;
+
+
+                // Nếu chưa có Payment, tạo mới
+                var payment = new Payment
                 {
+                    PaymentStatus = PaymentStatusEnum.NotPaid,
+                    PackageProcessStatus = "NotComplete"
+                };
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
+                paymentId = payment.Id;
 
+                var packageItemDetail = new List<PaymentDetail>();
+                decimal? totalPrice = 0;
+                foreach (var vpi in appointment.VaccinePackage.VaccinePackageItems)
+                {
                     var paymentDetail = new PaymentDetail
                     {
-                        PaymentId = payment.Id,
+                        PaymentId = paymentId,
                         VaccineId = vpi.VaccineId,
-                        DoseNumber= vpi.DoseNumber,
+                        DoseNumber = vpi.DoseNumber,
                         DoseRemaining = vpi.DoseNumber,
                         PricePerDose = vpi.PricePerDose
                     };
+                    totalPrice += vpi.PricePerDose * vpi.DoseNumber;
                     packageItemDetail.Add(paymentDetail);
                 }
                 _context.PaymentDetails.AddRange(packageItemDetail);
                 await _context.SaveChangesAsync();
-            }
-            return true;
+
+                payment.TotalPrice = totalPrice;
+                await _context.SaveChangesAsync();
+
+                // Gán PaymentId cho tất cả lịch hẹn cùng gói & đứa trẻ này
+                var relatedAppointments = await _context.Appointments
+                    .Where(a => a.VaccinePackageId == appointment.VaccinePackageId
+                                && a.ChildrenId == appointment.ChildrenId)
+                    .ToListAsync();
+
+                foreach (var app in relatedAppointments)
+                {
+                    app.PaymentId = paymentId;
+                }
+                await _context.SaveChangesAsync();
+
+                return true;
+            }         
         }
 
-        public async Task<bool> UpdatePaymentStatusToPaid(int appointmentId)
+        //Bước 3 -> 4
+        public async Task<int> UpdatePaymentStatus(int appointmentId, string? paymentMethod)
         {
-            var payment = await _context.Payments
-                .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
+            var appointment = await _context.Appointments
+                .Include(a => a.Payment)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-            if (payment == null)
-                return false; // Không tìm thấy Payment
+            if (appointment == null || appointment.Payment == null) return 0;
 
-            if (payment.PaymentStatus == "Paid")
-                return false; // Trạng thái đã là Paid, không cần cập nhật
+            if(appointment.Payment.PaymentStatus == PaymentStatusEnum.Paid)
+            {
+                appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+                return 1;
+            }
 
-            payment.PaymentStatus = "Paid";
-
-            var a = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
-            if(a == null) return false;
-            a.ProcessStep = "Waiting Inject";
-
-            _context.Appointments.Update(a);
-            _context.Payments.Update(payment);
+            appointment.Payment.PaymentMethod = paymentMethod == null ? "Invalid method" : paymentMethod;
+            appointment.Payment.PaymentStatus = PaymentStatusEnum.Paid;
+            appointment.ProcessStep = ProcessStepEnum.WaitingInject;
             await _context.SaveChangesAsync();
-            return true;
+            return 2;
         }
 
         private decimal CalculateTotalPrice(Appointment appointment)
@@ -112,77 +158,61 @@ namespace SWP391.backend.services
             return decimal.Parse(appointment.Vaccine.Price);
         }
 
-        public async Task<PaymentDetailDTO?> GetPaymentDetailAsync(int appointmentId)
+        public async Task<PaymentDetailDTO?> GetPaymentDetailByAppointmentIdAsync(int appointmentId)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Payment)
+                .Include(a => a.Payment.PaymentDetails)
+                .ThenInclude(pd => pd.Vaccine)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            if (appointment == null || appointment.Payment == null) return null;
+
+            return new PaymentDetailDTO
+            {
+                PaymentId = appointment.Payment.Id,
+                TotalPrice = appointment.Payment.TotalPrice,
+                PaymentMethod = appointment.Payment.PaymentMethod,
+                PaymentStatus = appointment.Payment.PaymentStatus,
+                PackageProcessStatus = appointment.Payment.PackageProcessStatus,
+                Items = appointment.Payment.PaymentDetails.Select(pd => new PaymentItemDTO
+                {
+                    VaccineId = pd.VaccineId,
+                    VaccineName = pd.Vaccine.Name,
+                    DoseNumber = pd.DoseNumber,
+                    DoseRemaining = pd.DoseRemaining,
+                    PricePerDose = pd.PricePerDose
+                }).ToList()
+            };
+        }
+
+        public async Task<PaymentDetailDTO?> GetPaymentDetailByPaymentId(int paymentId)
         {
             var payment = await _context.Payments
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Vaccine) // Vaccine đơn lẻ
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.VaccinePackage) // Gói vắc xin
-                        .ThenInclude(vp => vp.VaccinePackageItems) // Các mục trong gói
-                            .ThenInclude(vpi => vpi.Vaccine) // Vắc xin trong gói
                 .Include(p => p.PaymentDetails)
-                    .ThenInclude(pd => pd.Vaccine) // Chi tiết thanh toán liên kết với vắc xin
-                .FirstOrDefaultAsync(p => p.AppointmentId == appointmentId);
+                .ThenInclude(pd => pd.Vaccine)
+                .FirstOrDefaultAsync(p => p.Id == paymentId);
 
-            if (payment == null)
-                return null;
-
-            var appointment = payment.Appointment;
-            if (appointment == null)
-                throw new ArgumentException("Không tìm thấy lịch hẹn tương ứng với Payment.");
-
-            var vaccines = new List<VaccineDetailDTO>();
-
-            // Nếu lịch hẹn có một loại vắc xin đơn lẻ
-            if (appointment.VaccineId.HasValue && appointment.Vaccine != null)
-            {
-                int doseInjected = _context.PaymentDetails
-                    .Count(pd => pd.VaccineId == appointment.VaccineId && pd.PaymentId == payment.Id);
-              
-                vaccines.Add(new VaccineDetailDTO
-                {
-                    VaccineName = appointment.Vaccine.Name,
-                    DoseNumber = 1, // Vắc xin lẻ chỉ có một liều
-                    DoseRemaining = 1 - doseInjected,
-                    PricePerDose = appointment.Vaccine.Price != null ? decimal.Parse(appointment.Vaccine.Price) : 0,
-                    IsInjected = doseInjected > 0
-                });
-            }
-
-            // Nếu lịch hẹn có gói vắc xin
-            if (appointment.VaccinePackageId.HasValue && appointment.VaccinePackage != null)
-            {
-                foreach (var item in appointment.VaccinePackage.VaccinePackageItems)
-                {
-                    var vaccine = item.Vaccine;
-                    if (vaccine == null) continue; // Tránh lỗi nếu Vaccine bị null
-
-                    int doseInjected = _context.PaymentDetails
-                        .Count(pd => pd.VaccineId == vaccine.Id && pd.PaymentId == payment.Id);
-
-                    vaccines.Add(new VaccineDetailDTO
-                    {
-                        VaccineName = vaccine.Name,
-                        DoseNumber = item.DoseNumber, // Số liều của vắc xin trong gói
-                        DoseRemaining = item.DoseNumber - doseInjected,
-                        PricePerDose = item.PricePerDose,
-                        IsInjected = doseInjected > 0
-                    });
-                }
-            }
+            if (payment == null) return null;
 
             return new PaymentDetailDTO
             {
                 PaymentId = payment.Id,
-                AppointmentId = appointment.Id,
-                DateInjection = appointment.DateInjection,
-                TotalPrice = payment.TotalPrice ?? 0,
+                TotalPrice = payment.TotalPrice,
                 PaymentMethod = payment.PaymentMethod,
                 PaymentStatus = payment.PaymentStatus,
-                InjectionProcessStatus = payment.InjectionProcessStatus,
-                Vaccines = vaccines
+                PackageProcessStatus = payment.PackageProcessStatus,
+                Items = payment.PaymentDetails.Select(pd => new PaymentItemDTO
+                {
+                    VaccineId = pd.VaccineId,
+                    VaccineName = pd.Vaccine.Name,
+                    DoseNumber = pd.DoseNumber,
+                    DoseRemaining = pd.DoseRemaining,
+                    PricePerDose = pd.PricePerDose
+                }).ToList()
             };
         }
+
+
     }
 }

@@ -70,6 +70,24 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
+        [HttpGet("get-by-childId/{childId}")]
+        public async Task<IActionResult> GetAppointmentByChildId(int childId)
+        {
+            try
+            {
+                var appointmentDto = await this.a.GetAppointmentByChildId(childId);
+                return Ok(appointmentDto);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpGet("get-appointment-today")]
         public async Task<IActionResult> GetAppointmentsToday()
         {
@@ -119,8 +137,6 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
-
-
         [HttpPut("update-status-by-staff/step-2-to-3")]
         public async Task<IActionResult> UpdateAppointmentForStaff(int id, [FromBody] EditAppointmentDetailDTO dto)
         {
@@ -130,13 +146,30 @@ namespace SWP391.backend.api.Controllers
             return Ok(new { message = "Appointment updated successfully" });
         }
 
-        [HttpPut("update-status-by-doctor")]
-        public async Task<IActionResult> UpdateAppointmentForDoctor(int id)
+        [HttpPut("confirm-injection-by-doctor/{appointmentId}")]
+        public async Task<IActionResult> ConfirmInjection(int appointmentId)
         {
-            var result = await this.a.UpdateAppointmentForDoctorAsync(id);
-            if (!result) return BadRequest("Cannot update appointment");
+            var result = await this.a.ConfirmInjectionAsync(appointmentId);
+            if (!result) return BadRequest("Cannot update appointment, not found appointment or something");
 
-            return Ok(new { message = "Appointment updated successfully" });
+            return Ok(new { message = "Inject complete" });
         }
+
+        [HttpPut("update-multiple-injection-dates")]
+        public async Task<IActionResult> UpdateMultipleInjectionDates([FromBody] List<InjectionUpdateDTO> updates)
+        {
+            if (updates == null || !updates.Any())
+                return BadRequest("Danh sách cập nhật không hợp lệ.");
+
+            var result = await this.a.UpdateMultipleInjectionDatesAsync(
+                updates.Select(u => (u.AppointmentId, u.NewDate)).ToList()
+            );
+
+            if (!result)
+                return BadRequest("Cập nhật ngày tiêm thất bại.");
+
+            return Ok("Cập nhật ngày tiêm thành công.");
+        }
+
     }
 }

@@ -9,22 +9,21 @@ namespace SWP391.backend.repository.DTO.Payment
     public class PaymentDetailDTO
     {
         public int PaymentId { get; set; }
-        public int AppointmentId { get; set; }
-        public DateTime? DateInjection { get; set; }
-        public decimal TotalPrice { get; set; }
-        public string PaymentMethod { get; set; }
-        public string PaymentStatus { get; set; }
-        public string InjectionProcessStatus { get; set; }
-        public List<VaccineDetailDTO> Vaccines { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? PaymentStatus { get; set; }
+        public string? PackageProcessStatus { get; set; }
+        public List<PaymentItemDTO> Items { get; set; } = new();
     }
 
-    public class VaccineDetailDTO
+    public class PaymentItemDTO
     {
-        public string VaccineName { get; set; }
+        public int? VaccineId { get; set; }
+        public string? VaccineName { get; set; }
         public int? DoseNumber { get; set; }
         public int? DoseRemaining { get; set; }
         public decimal? PricePerDose { get; set; }
-        public bool IsInjected { get; set; } // Xác định mũi này đã tiêm chưa
     }
+
 
 }
