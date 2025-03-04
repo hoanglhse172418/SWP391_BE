@@ -15,9 +15,9 @@ namespace SWP391.backend.api.Controllers
 
 
         [HttpGet("detail/{appointmentId}")]
-        public async Task<IActionResult> GetPaymentDetail(int appointmentId)
+        public async Task<IActionResult> GetPaymentDetailByAppointmentId(int appointmentId)
         {
-            var result = await this.p.GetPaymentDetailAsync(appointmentId);
+            var result = await this.p.GetPaymentDetailByAppointmentIdAsync(appointmentId);
             if (result == null)
             {
                 return NotFound(new { message = "Payment not found" });
@@ -25,15 +25,30 @@ namespace SWP391.backend.api.Controllers
             return Ok(result);
         }
 
-        //Gọi khi từ bước 3 sang 4
-        [HttpPut("update-status-payment-status/step-3-to-4/{appointmentId}")]
-        public async Task<IActionResult> UpdatePaymentStatusToPaid(int appointmentId)
+        [HttpGet("detail/{paymentId}")]
+        public async Task<IActionResult> GetPaymentDetailByPaymentId(int paymentId)
         {
-            var result = await this.p.UpdatePaymentStatusToPaid(appointmentId);
-
-            if (!result)
+            var paymentDetail = await this.p.GetPaymentDetailByPaymentId(paymentId);
+            if (paymentDetail == null)
             {
-                return BadRequest("Payment update failed. Either the appointment does not exist, or the payment is already marked as Paid.");
+                return NotFound(new { message = "Payment not found" });
+            }
+            return Ok(paymentDetail);
+        }
+
+        //Gọi khi từ bước 3 sang 4
+        [HttpPut("update-status-payment-status/step-3-to-4")]
+        public async Task<IActionResult> UpdatePaymentStatus(int appointmentId, string? paymentMethod)
+        {
+            int result = await this.p.UpdatePaymentStatus(appointmentId, paymentMethod);
+
+            if (result == 0) 
+            {
+                return NotFound("Appointment or payment not found");
+            }
+            if(result == 1)
+            {
+                return Ok("Payment was created ! Update appointment process");
             }
             return Ok("Payment status updated to Paid successfully.");
         }

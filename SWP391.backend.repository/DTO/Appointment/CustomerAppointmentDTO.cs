@@ -4,37 +4,39 @@
     public List<PackageVaccineAppointmentDTO> PackageVaccineAppointments { get; set; } = new();
 }
 
-// DTO cho lịch hẹn vắc xin lẻ
 public class SingleVaccineAppointmentDTO
 {
     public int Id { get; set; }
-    public string ChildFullName { get; set; }
-    public string ContactPhoneNumber { get; set; }
-    public string DiaseaseName { get; set; }
-    public string VaccineName { get; set; }
-    public DateTime DateInjection { get; set; }
-    public string Status { get; set; }
-    public string ProcessStep { get; set; }
-    public DateTime AppointmentCreatedDate { get; set; }
-}
-
-// DTO cho lịch hẹn gói vắc xin
-public class PackageVaccineAppointmentDTO
-{
+    public int? ChildrenId { get; set; }
     public string? ChildFullName { get; set; }
     public string? ContactPhoneNumber { get; set; }
-    public string? VaccinePackageName { get; set; }
-    public DateTime DateInjection { get; set; }
+    public string? DiseaseName { get; set; }
+    public int? VaccineId { get; set; }
+    public string? VaccineName { get; set; }
+    public DateTime? DateInjection { get; set; }
     public string? Status { get; set; }
-    public DateTime AppointmentCreatedDate { get; set; }
-    public List<FollowUpAppointmentDTO> FollowUpAppointments { get; set; } = new();
+    public string? ProcessStep { get; set; }
+    public int? PaymentId { get; set; }
 }
 
-// DTO cho từng mũi trong gói
-public class FollowUpAppointmentDTO
+public class PackageVaccineAppointmentDTO
 {
+    public int VaccinePackageId { get; set; }
+    public string? VaccinePackageName { get; set; }
+    public int? ChildrenId { get; set; }
+    public string? ChildFullName { get; set; }
+    public string? ContactPhoneNumber { get; set; }
+    public List<VaccineItemDTO> VaccineItems { get; set; } = new();
+}
+
+public class VaccineItemDTO
+{
+    public int Id { get; set; }
+    public int? VaccineId { get; set; }
     public string? VaccineName { get; set; }
-    public int DoseNumber { get; set; }
-    public DateTime DateInjection { get; set; }
+    public int DoseSequence { get; set; }
+    public DateTime? DateInjection { get; set; }
     public string? Status { get; set; }
+    public string? ProcessStep { get; set; }
+    public int? PaymentId { get; set; }
 }

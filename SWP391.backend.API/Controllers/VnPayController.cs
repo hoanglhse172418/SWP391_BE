@@ -89,11 +89,11 @@ namespace SWP391.backend.api.Controllers
                     pay.AddRequestData("vnp_TxnRef", transactionCode); // Mã hóa đơn
 
                     // Ensure the AppointmentId is valid
-                    var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.Id == payment.AppointmentId);
-                    if (appointment == null)
-                    {
-                        return BadRequest("AppointmentId không hợp lệ.");
-                    }
+                    //var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.Id == payment.AppointmentId);
+                    //if (appointment == null)
+                    //{
+                    //    return BadRequest("AppointmentId không hợp lệ.");
+                    //}
 
                     // Tạo URL thanh toán VNPay
                     string paymentUrl = pay.CreateRequestUrl(baseUrl, hashSecret);
@@ -133,50 +133,51 @@ namespace SWP391.backend.api.Controllers
         public async Task<IActionResult> ReturnUrl()
         {
             // Xử lý thông tin từ query string và chuyển đổi thành string
-            var responseCode = Request.Query["vnp_ResponseCode"].ToString();
-            var transactionId = Request.Query["vnp_TxnRef"].ToString();
+            //var responseCode = Request.Query["vnp_ResponseCode"].ToString();
+            //var transactionId = Request.Query["vnp_TxnRef"].ToString();
 
-            // Kiểm tra mã phản hồi và thực hiện logic cần thiết
-            var payment = await context.Payments.FirstOrDefaultAsync(p => p.AppointmentId.ToString() == transactionId);
-            if (payment == null)
-            {
-                return Content("Không tìm thấy giao dịch với mã: " + transactionId);
-            }
+            //// Kiểm tra mã phản hồi và thực hiện logic cần thiết
+            //var payment = await context.Payments.FirstOrDefaultAsync(p => p.AppointmentId.ToString() == transactionId);
+            //if (payment == null)
+            //{
+            //    return Content("Không tìm thấy giao dịch với mã: " + transactionId);
+            //}
 
-            if (responseCode == "00")
-            {
-                // Thanh toán thành công
-                payment.PaymentStatus = "Success";
-                context.Payments.Update(payment);
+            //if (responseCode == "00")
+            //{
+            //    // Thanh toán thành công
+            //    payment.PaymentStatus = "Success";
+            //    context.Payments.Update(payment);
 
-                // Lấy Enrollment dựa trên EnrollmentId của Payment
-                var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
-                if (enrollment != null)
-                {
-                    enrollment.Status = "Success"; // Cập nhật status của Enrollment
-                    context.Appointments.Update(enrollment);
-                }
+            //    // Lấy Enrollment dựa trên EnrollmentId của Payment
+            //    var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
+            //    if (enrollment != null)
+            //    {
+            //        enrollment.Status = "Success"; // Cập nhật status của Enrollment
+            //        context.Appointments.Update(enrollment);
+            //    }
 
-                await context.SaveChangesAsync();
-                return Content("Thanh toán thành công. Mã giao dịch: " + transactionId);
-            }
-            else
-            {
-                // Thanh toán thất bại
-                payment.PaymentStatus = "Failed";
-                context.Payments.Update(payment);
+            //    await context.SaveChangesAsync();
+            //    return Content("Thanh toán thành công. Mã giao dịch: " + transactionId);
+            //}
+            //else
+            //{
+            //    // Thanh toán thất bại
+            //    payment.PaymentStatus = "Failed";
+            //    context.Payments.Update(payment);
 
-                // Lấy Enrollment dựa trên EnrollmentId của Payment
-                var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
-                if (enrollment != null)
-                {
-                    enrollment.Status = "Failed"; // Cập nhật status của Enrollment
-                    context.Appointments.Update(enrollment);
-                }
+            //    // Lấy Enrollment dựa trên EnrollmentId của Payment
+            //    var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
+            //    if (enrollment != null)
+            //    {
+            //        enrollment.Status = "Failed"; // Cập nhật status của Enrollment
+            //        context.Appointments.Update(enrollment);
+            //    }
 
-                await context.SaveChangesAsync();
-                return Content("Thanh toán không thành công. Mã lỗi: " + responseCode);
-            }
+            //    await context.SaveChangesAsync();
+            //    return Content("Thanh toán không thành công. Mã lỗi: " + responseCode);
+            //}
+            return Ok();
         }
     }
 }
