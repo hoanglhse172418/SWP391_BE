@@ -67,7 +67,11 @@ namespace SWP391.backend.api.Controllers
                 string? returnUrl = _configuration["Vnpay:UrlReturnLocal"]; // Change to returnAzure if needed
                 string? returnUrlAzure = _configuration["Vnpay:UrlReturnAzure"]; // Change to returnAzure if needed
 
-                if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrl }.Any(string.IsNullOrEmpty))
+                //if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrl }.Any(string.IsNullOrEmpty))
+                //{
+                //    return BadRequest("Cấu hình VNPay không hợp lệ.");
+                //}
+                if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrlAzure }.Any(string.IsNullOrEmpty))
                 {
                     return BadRequest("Cấu hình VNPay không hợp lệ.");
                 }
