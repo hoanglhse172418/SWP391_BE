@@ -11,6 +11,7 @@ namespace SWP391.backend.repository.Models
         public int? VaccineId { get; set; }
         public DateTime? ExpectedInjectionDate { get; set; }
         public DateTime? ActualInjectionDate { get; set; }
+        public int? Month { get; set; }
 
         public virtual Disease? Disease { get; set; }
         public virtual VaccinationProfile? VaccinationProfile { get; set; }
