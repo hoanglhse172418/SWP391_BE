@@ -10,6 +10,6 @@ namespace SWP391.backend.repository.DTO.VaccinationDetail
     {
         public int? DiseaseId { get; set; }
         public int? VaccineId { get; set; }
-        public string month { get; set; }
+        public int Month { get; set; }
     }
 }
