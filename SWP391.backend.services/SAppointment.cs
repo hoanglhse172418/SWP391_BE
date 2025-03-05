@@ -323,6 +323,7 @@ namespace SWP391.backend.services
             return responseDto;
         }
 
+
         //Gọi khi từ bước 2 sang 3
         public async Task<bool> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto)
         {
