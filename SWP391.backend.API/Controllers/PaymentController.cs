@@ -14,7 +14,7 @@ namespace SWP391.backend.api.Controllers
         }
 
 
-        [HttpGet("detail/{appointmentId}")]
+        [HttpGet("details/{appointmentId}")]
         public async Task<IActionResult> GetPaymentDetailByAppointmentId(int appointmentId)
         {
             var result = await this.p.GetPaymentDetailByAppointmentIdAsync(appointmentId);
