@@ -32,100 +32,88 @@ namespace SWP391.backend.api.Controllers
         {
             try
             {
-                // Chuyển đổi PaymentId sang int
                 if (!int.TryParse(PaymentId, out int paymentIdInt))
                 {
                     return BadRequest("ID thanh toán không hợp lệ.");
                 }
 
-                // Lấy thông tin thanh toán từ cơ sở dữ liệu
                 var payment = await context.Payments.FirstOrDefaultAsync(x => x.Id == paymentIdInt);
-                if (payment != null)
+                if (payment == null)
                 {
-                    // Lấy địa chỉ IP của khách hàng
-                    string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
+                    return NotFound("Không tồn tại ID thanh toán.");
+                }
 
-                    // Lấy cấu hình VNPay từ appsettings
-                    string? baseUrl = _configuration["Vnpay:BaseUrl"];
-                    string? tmnCode = _configuration["Vnpay:TmnCode"];
-                    string? hashSecret = _configuration["Vnpay:HashSecret"];
-                    string? currCode = _configuration["Vnpay:CurrCode"];
-                    string? locale = _configuration["Vnpay:Locale"];
-                    string? returnUrl = _configuration["Vnpay:UrlReturnLocal"];
-                    string? returnAzure = _configuration["Vnpay:UrlReturnAzure"];
+                var paymentRecord = await context.Appointments.FirstOrDefaultAsync(a => a.PaymentId == payment.Id);
+                if (paymentRecord == null)
+                {
+                    return BadRequest("paymentId không hợp lệ.");
+                }
 
-                    if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(hashSecret) ||
-                        string.IsNullOrEmpty(currCode) || string.IsNullOrEmpty(locale) ||
-                       //local
-                       //string.IsNullOrEmpty(returnUrl))
+                if (payment.TotalPrice == null)
+                {
+                    return BadRequest("Giá trị thanh toán không hợp lệ.");
+                }
 
-                       //azure
-                       string.IsNullOrEmpty(returnAzure))
-                    {
-                        return BadRequest("Cấu hình VNPay không hợp lệ.");
-                    }
+                // Get Client IP Address
+                string ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
 
-                    SVnpay pay = new SVnpay();
+                // Load VNPay Configurations
+                string? baseUrl = _configuration["Vnpay:BaseUrl"];
+                string? tmnCode = _configuration["Vnpay:TmnCode"];
+                string? hashSecret = _configuration["Vnpay:HashSecret"];
+                string? currCode = _configuration["Vnpay:CurrCode"];
+                string? locale = _configuration["Vnpay:Locale"];
+                string? returnUrl = _configuration["Vnpay:UrlReturnLocal"]; // Change to returnAzure if needed
 
-                    // Thêm các thông tin yêu cầu thanh toán
-                    pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"] ?? throw new ArgumentNullException("Vnpay:Version"));
-                    pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"] ?? throw new ArgumentNullException("Vnpay:Command"));
-                    pay.AddRequestData("vnp_TmnCode", tmnCode);
-                    pay.AddRequestData("vnp_Amount", ((decimal)payment.TotalPrice!.Value * 100).ToString()); // Số tiền cần thanh toán
-                    pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
-                    pay.AddRequestData("vnp_CurrCode", currCode);
-                    pay.AddRequestData("vnp_IpAddr", ip);
-                    pay.AddRequestData("vnp_Locale", locale);
-                    pay.AddRequestData("vnp_OrderInfo", "Thanh toán sản phẩm thông qua hệ thống BCS");
-                    pay.AddRequestData("vnp_OrderType", "other");
-                    //localUrl
-                    pay.AddRequestData("vnp_ReturnUrl", returnUrl);
+                if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrl }.Any(string.IsNullOrEmpty))
+                {
+                    return BadRequest("Cấu hình VNPay không hợp lệ.");
+                }
 
-                    //azureUrl
-                    //pay.AddRequestData("vnp_ReturnUrl", returnAzure);
+                // Initialize VNPay
+                SVnpay pay = new SVnpay();
+                pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0");
+                pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"] ?? "pay");
+                pay.AddRequestData("vnp_TmnCode", tmnCode);
+                pay.AddRequestData("vnp_Amount", ((decimal)payment.TotalPrice.Value * 100).ToString());
+                pay.AddRequestData("vnp_CreateDate", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
+                pay.AddRequestData("vnp_CurrCode", currCode);
+                pay.AddRequestData("vnp_IpAddr", ip);
+                pay.AddRequestData("vnp_Locale", locale);
+                pay.AddRequestData("vnp_OrderInfo", "Thanh toán sản phẩm thông qua hệ thống BCS");
+                pay.AddRequestData("vnp_OrderType", "other");
+                //local
+                pay.AddRequestData("vnp_ReturnUrl", returnUrl);
 
-                    // Tạo mã giao dịch cho VNPay
-                    string transactionCode = (DateTime.Now.Ticks % int.MaxValue).ToString();
-                    pay.AddRequestData("vnp_TxnRef", transactionCode); // Mã hóa đơn
+                //azureUrl
+                //pay.AddRequestData("vnp_ReturnUrl", returnAzure);
+                
 
-                    // Ensure the AppointmentId is valid
-                    //var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.Id == payment.AppointmentId);
-                    //if (appointment == null)
-                    //{
-                    //    return BadRequest("AppointmentId không hợp lệ.");
-                    //}
+                // Create Payment URL
+                string paymentUrl = pay.CreateRequestUrl(baseUrl, hashSecret);
+                Console.WriteLine("Payment URL: " + paymentUrl);
 
-                    // Tạo URL thanh toán VNPay
-                    string paymentUrl = pay.CreateRequestUrl(baseUrl, hashSecret);
-                    Console.WriteLine("Payment URL: " + paymentUrl); // Log link thanh toán để kiểm tra
+                // Log VNPay Request Parameters
+                Console.WriteLine("Request Parameters:");
+                foreach (var requestData in pay.RequestData)
+                {
+                    Console.WriteLine($"{requestData.Key}: {requestData.Value}");
+                }
 
-                    // Ghi lại các tham số đã gửi đến VNPay
-                    Console.WriteLine("Request Parameters: ");
-                    foreach (var requestData in pay.RequestData)
-                    {
-                        Console.WriteLine($"{requestData.Key}: {requestData.Value}");
-                    }
+                context.Payments.Update(payment);
 
-                    context.Payments.Update(payment);
-
-                    // Lưu thông tin vào cơ sở dữ liệu
-                    if (await context.SaveChangesAsync() > 0)
-                    {
-                        return Ok(paymentUrl);
-                    }
-                    else
-                    {
-                        throw new Exception("Lỗi trong quá trình lưu vào cơ sở dữ liệu");
-                    }
+                if (await context.SaveChangesAsync() > 0)
+                {
+                    return Ok(paymentUrl);
                 }
                 else
                 {
-                    throw new Exception("Không tồn tại ID thanh toán.");
+                    return StatusCode(500, "Lỗi trong quá trình lưu vào cơ sở dữ liệu");
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
             }
         }
 
