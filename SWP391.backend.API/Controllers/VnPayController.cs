@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using SWP391.backend.repository.Models;
+using SWP391.backend.repository.Utilities;
 using SWP391.backend.services;
 using System.Threading.Tasks;
 
@@ -64,29 +65,35 @@ namespace SWP391.backend.api.Controllers
                 string? currCode = _configuration["Vnpay:CurrCode"];
                 string? locale = _configuration["Vnpay:Locale"];
                 string? returnUrl = _configuration["Vnpay:UrlReturnLocal"]; // Change to returnAzure if needed
+                string? returnUrlAzure = _configuration["Vnpay:UrlReturnAzure"]; // Change to returnAzure if needed
 
-                if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrl }.Any(string.IsNullOrEmpty))
+                //if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrl }.Any(string.IsNullOrEmpty))
+                //{
+                //    return BadRequest("Cấu hình VNPay không hợp lệ.");
+                //}
+                if (new[] { baseUrl, tmnCode, hashSecret, currCode, locale, returnUrlAzure }.Any(string.IsNullOrEmpty))
                 {
                     return BadRequest("Cấu hình VNPay không hợp lệ.");
                 }
 
                 // Initialize VNPay
                 SVnpay pay = new SVnpay();
+                pay.AddRequestData("vnp_TxnRef", payment.Id.ToString());
                 pay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0");
                 pay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"] ?? "pay");
                 pay.AddRequestData("vnp_TmnCode", tmnCode);
-                pay.AddRequestData("vnp_Amount", ((decimal)payment.TotalPrice.Value * 100).ToString());
-                pay.AddRequestData("vnp_CreateDate", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
+                pay.AddRequestData("vnp_Amount", ((int)payment.TotalPrice.Value * 100).ToString());
+                pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
                 pay.AddRequestData("vnp_CurrCode", currCode);
                 pay.AddRequestData("vnp_IpAddr", ip);
                 pay.AddRequestData("vnp_Locale", locale);
                 pay.AddRequestData("vnp_OrderInfo", "Thanh toán sản phẩm thông qua hệ thống BCS");
                 pay.AddRequestData("vnp_OrderType", "other");
                 //local
-                pay.AddRequestData("vnp_ReturnUrl", returnUrl);
+                //pay.AddRequestData("vnp_ReturnUrl", returnUrl);
 
                 //azureUrl
-                //pay.AddRequestData("vnp_ReturnUrl", returnAzure);
+                pay.AddRequestData("vnp_ReturnUrl", returnUrlAzure);
                 
 
                 // Create Payment URL
@@ -121,51 +128,34 @@ namespace SWP391.backend.api.Controllers
         public async Task<IActionResult> ReturnUrl()
         {
             // Xử lý thông tin từ query string và chuyển đổi thành string
-            //var responseCode = Request.Query["vnp_ResponseCode"].ToString();
-            //var transactionId = Request.Query["vnp_TxnRef"].ToString();
+            var responseCode = Request.Query["vnp_ResponseCode"].ToString();
+            var transactionId = Request.Query["vnp_TxnRef"].ToString();
 
-            //// Kiểm tra mã phản hồi và thực hiện logic cần thiết
-            //var payment = await context.Payments.FirstOrDefaultAsync(p => p.AppointmentId.ToString() == transactionId);
-            //if (payment == null)
-            //{
-            //    return Content("Không tìm thấy giao dịch với mã: " + transactionId);
-            //}
+            // Kiểm tra mã phản hồi và thực hiện logic cần thiết
+            var payment = await context.Payments.FirstOrDefaultAsync(p => p.Id.ToString() == transactionId);
+            if (payment == null)
+            {
+                return Content("Không tìm thấy giao dịch với mã: " + transactionId);
+            }
 
-            //if (responseCode == "00")
-            //{
-            //    // Thanh toán thành công
-            //    payment.PaymentStatus = "Success";
-            //    context.Payments.Update(payment);
+            if (responseCode == "00")
+            {
+                // Thanh toán thành công
+                payment.PaymentStatus = PaymentStatusEnum.Paid;
+                context.Payments.Update(payment);
 
-            //    // Lấy Enrollment dựa trên EnrollmentId của Payment
-            //    var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
-            //    if (enrollment != null)
-            //    {
-            //        enrollment.Status = "Success"; // Cập nhật status của Enrollment
-            //        context.Appointments.Update(enrollment);
-            //    }
+                await context.SaveChangesAsync();
+                return Content("Thanh toán thành công. Mã giao dịch: " + transactionId);
+            }
+            else
+            {
+                // Thanh toán thất bại
+                payment.PaymentStatus = PaymentStatusEnum.NotPaid;
+                context.Payments.Update(payment);
 
-            //    await context.SaveChangesAsync();
-            //    return Content("Thanh toán thành công. Mã giao dịch: " + transactionId);
-            //}
-            //else
-            //{
-            //    // Thanh toán thất bại
-            //    payment.PaymentStatus = "Failed";
-            //    context.Payments.Update(payment);
-
-            //    // Lấy Enrollment dựa trên EnrollmentId của Payment
-            //    var enrollment = await context.Appointments.FirstOrDefaultAsync(e => e.Id == payment.Id);
-            //    if (enrollment != null)
-            //    {
-            //        enrollment.Status = "Failed"; // Cập nhật status của Enrollment
-            //        context.Appointments.Update(enrollment);
-            //    }
-
-            //    await context.SaveChangesAsync();
-            //    return Content("Thanh toán không thành công. Mã lỗi: " + responseCode);
-            //}
-            return Ok();
+                await context.SaveChangesAsync();
+                return Content("Thanh toán không thành công. Mã lỗi: " + responseCode);
+            }
         }
     }
 }
