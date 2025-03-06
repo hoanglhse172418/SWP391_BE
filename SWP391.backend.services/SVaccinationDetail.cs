@@ -173,94 +173,49 @@ namespace SWP391.backend.services
             }
         }
 
-        //public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
-        //{
-        //    try
-        //    {
-        //        // Tìm chi tiết tiêm chủng theo ID
-        //        var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
-        //        if (vaccinationDetail == null)
-        //        {
-        //            throw new Exception("Vaccination detail not found.");
-        //        }
+        public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
+        {
+            try
+            {
+                // Tìm chi tiết tiêm chủng theo ID
+                var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
+                if (vaccinationDetail == null)
+                {
+                    throw new Exception("Vaccination detail not found.");
+                }
 
-        //        // Lấy thông tin hồ sơ tiêm chủng
-        //        var vaccinationProfile = await context.VaccinationProfiles.FindAsync(vaccinationDetail.VaccinationProfileId);
-        //        if (vaccinationProfile == null)
-        //        {
-        //            throw new Exception("Vaccination profile not found.");
-        //        }
+                // Lấy thông tin hồ sơ tiêm chủng
+                var vaccinationProfile = await context.VaccinationProfiles.FindAsync(vaccinationDetail.VaccinationProfileId);
+                if (vaccinationProfile == null)
+                {
+                    throw new Exception("Vaccination profile not found.");
+                }
 
-        //        // Lấy thông tin trẻ em
-        //        var child = await context.Children
-        //            .FirstOrDefaultAsync(c => c.Id == vaccinationProfile.ChildrenId);
-        //        if (child == null)
-        //        {
-        //            throw new Exception("Child not found.");
-        //        }
+                // Lấy thông tin trẻ em
+                var child = await context.Children
+                    .FirstOrDefaultAsync(c => c.Id == vaccinationProfile.ChildrenId);
+                if (child == null || !child.Dob.HasValue)
+                {
+                    throw new Exception("Child not found or date of birth is missing.");
+                }
 
-        //        // Lấy VaccineTemplate (nếu DiseaseId được cập nhật)
-        //        VaccineTemplate? template = null;
-        //        if (request.DiseaseId.HasValue)
-        //        {
-        //            template = await context.VaccineTemplates
-        //                .FirstOrDefaultAsync(vt => vt.DiseaseId == request.DiseaseId);
-        //            if (template == null)
-        //            {
-        //                throw new Exception("Vaccine template not found.");
-        //            }
-        //        }
+                // Cập nhật VaccineId nếu có
+                vaccinationDetail.VaccineId = request.VaccineId ?? vaccinationDetail.VaccineId;
 
-        //        // Giữ nguyên dữ liệu cũ nếu VaccineId hoặc DiseaseId là null
-        //        vaccinationDetail.DiseaseId = request.DiseaseId ?? vaccinationDetail.DiseaseId;
-        //        vaccinationDetail.VaccineId = request.VaccineId ?? vaccinationDetail.VaccineId;
-        //        vaccinationDetail.Month = request.Month;
+                // Chỉ cập nhật ActualInjectionDate (Không thay đổi ExpectedInjectionDate)
+                vaccinationDetail.ActualInjectionDate = child.Dob.Value.AddMonths(request.Month);
 
-        //        // Tính ExpectedInjectionDate nếu có DiseaseId mới
-        //        DateTime expectedInjectionDate = vaccinationDetail.ExpectedInjectionDate;
-        //        if (template != null)
-        //        {
-        //            expectedInjectionDate = child.Dob ?? DateTime.UtcNow;
+                // Lưu vào database
+                context.VaccinationDetails.Update(vaccinationDetail);
+                await context.SaveChangesAsync();
 
-        //            if (template.Month.HasValue)
-        //            {
-        //                expectedInjectionDate = child.Dob.Value.AddMonths(template.Month.Value);
-        //            }
-        //            else if (!string.IsNullOrEmpty(template.AgeRange))
-        //            {
-        //                if (template.AgeRange.Contains("tháng"))
-        //                {
-        //                    int months = int.Parse(template.AgeRange.Replace(" tháng", "").Trim());
-        //                    expectedInjectionDate = child.Dob.Value.AddMonths(months);
-        //                }
-        //                else if (template.AgeRange.Contains("năm"))
-        //                {
-        //                    int years = int.Parse(template.AgeRange.Replace(" năm", "").Trim());
-        //                    expectedInjectionDate = child.Dob.Value.AddYears(years);
-        //                }
-        //            }
-        //        }
-        //        vaccinationDetail.ExpectedInjectionDate = expectedInjectionDate;
-
-        //        // Cập nhật ActualInjectionDate
-        //        DateTime actualInjectionDate = child.Dob.Value.AddMonths(request.Month);
-        //        if (actualInjectionDate < expectedInjectionDate)
-        //        {
-        //            throw new Exception("Actual injection date must be equal or greater than expected injection date.");
-        //        }
-        //        vaccinationDetail.ActualInjectionDate = actualInjectionDate;
-
-        //        // Lưu vào database
-        //        context.VaccinationDetails.Update(vaccinationDetail);
-        //        await context.SaveChangesAsync();
-
-        //        return vaccinationDetail;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
-        //    }
-        //}
+                return vaccinationDetail;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
+            }
+        }
 
         public async Task<VaccinationDetail> GetById(int id)
         {

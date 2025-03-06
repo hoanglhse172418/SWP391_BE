@@ -143,6 +143,51 @@ namespace SWP391.backend.services
             context.VaccinationProfiles.Add(vaccinationProfile);
             await context.SaveChangesAsync();
 
+            // Lấy danh sách các VaccineTemplate
+            var vaccineTemplates = await context.VaccineTemplates.ToListAsync();
+            if (vaccineTemplates == null || !vaccineTemplates.Any())
+            {
+                throw new Exception("No vaccine templates found.");
+            }
+
+            // Tạo danh sách VaccinationDetail
+            var vaccinationDetails = new List<VaccinationDetail>();
+            foreach (var template in vaccineTemplates)
+            {
+                DateTime expectedInjectionDate = child.Dob ?? DateTime.UtcNow;
+
+                if (template.Month.HasValue)
+                {
+                    expectedInjectionDate = child.Dob.Value.AddMonths(template.Month.Value);
+                }
+                else if (!string.IsNullOrEmpty(template.AgeRange))
+                {
+                    if (template.AgeRange.Contains("tháng"))
+                    {
+                        int months = int.Parse(template.AgeRange.Replace(" tháng", "").Trim());
+                        expectedInjectionDate = child.Dob.Value.AddMonths(months);
+                    }
+                    else if (template.AgeRange.Contains("năm"))
+                    {
+                        int years = int.Parse(template.AgeRange.Replace(" năm", "").Trim());
+                        expectedInjectionDate = child.Dob.Value.AddYears(years);
+                    }
+                }
+
+                var vaccinationDetail = new VaccinationDetail
+                {
+                    VaccinationProfileId = vaccinationProfile.Id,
+                    DiseaseId = template.DiseaseId,
+                    ExpectedInjectionDate = expectedInjectionDate,
+                };
+
+                vaccinationDetails.Add(vaccinationDetail);
+            }
+
+            // Lưu danh sách VaccinationDetail vào DB
+            context.VaccinationDetails.AddRange(vaccinationDetails);
+            await context.SaveChangesAsync();
+
             return child;
         }
 
