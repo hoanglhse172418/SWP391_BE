@@ -73,6 +73,18 @@ namespace SWP391.backend.api.Controllers
             return Ok(vct);
         }
 
+        [HttpGet]
+        [Route("get-by-profileid/{profileid}")]
+        public async Task<IActionResult> GetVaccineTemplatesbyProfileId(int profileid)
+        {
+            var vct = await vt.GetVaccineTemplatesbyProfileId(profileid);
+            if (vct == null || !vct.Any())
+            {
+                return NotFound();
+            }
+            return Ok(vct);
+        }
+
         [HttpDelete]
         [Route("delete/{id}")]
         public async Task<IActionResult> Delete(int id)

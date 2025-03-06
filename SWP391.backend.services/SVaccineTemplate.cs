@@ -193,6 +193,33 @@ namespace SWP391.backend.services
             }
         }
 
+        public async Task<List<VaccineTemplateDTO>> GetVaccineTemplatesbyProfileId(int ProfileId)
+        {
+            var vaccineTemplates = await context.VaccineTemplates
+                .Join(context.VaccinationDetails.Where(vd => vd.VaccinationProfileId == ProfileId),
+                      vt => vt.DiseaseId,
+                      vd => vd.DiseaseId,
+                      (vt, vd) => new VaccineTemplateDTO
+                      {
+                          Id = vt.Id,
+                          DiseaseId = (int)vt.DiseaseId,
+                          Description = vt.Description,
+                          Month = vt.Month,
+                          AgeRange = vt.AgeRange,
+                          DoseNumber = (int)vt.DoseNumber,
+                          Notes = vt.Notes,
+                          ExpectedInjectionDate = vd.ExpectedInjectionDate // Lấy từ VaccinationDetail
+                      })
+                .ToListAsync();
+
+            if (!vaccineTemplates.Any())
+            {
+                throw new Exception("No vaccine templates found for this profile.");
+            }
+
+            return vaccineTemplates;
+        }
+
         public async Task<VaccineTemplate> GetById(int id)
         {
             try

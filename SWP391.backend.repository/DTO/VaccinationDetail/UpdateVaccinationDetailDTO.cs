@@ -8,7 +8,6 @@ namespace SWP391.backend.repository.DTO.VaccinationDetail
 {
     public class UpdateVaccinationDetailDTO
     {
-        public int? DiseaseId { get; set; }
         public int? VaccineId { get; set; }
         public int Month { get; set; }
     }
