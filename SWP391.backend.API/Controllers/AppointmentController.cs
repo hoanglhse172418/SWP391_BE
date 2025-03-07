@@ -171,5 +171,11 @@ namespace SWP391.backend.api.Controllers
             return Ok("Cập nhật ngày tiêm thành công.");
         }
 
+        [HttpGet("get-appointments-from-buying-package/{childId}")]
+        public async Task<IActionResult> GetAppointmentsFromBuyingPackage(int childId)
+        {
+            var result = await this.a.GetAppointmentsFromBuyingPackageAsync(childId);
+            return Ok(result);
+        }
     }
 }

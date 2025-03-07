@@ -253,6 +253,7 @@ namespace SWP391.backend.services
             }).ToList();
         }
 
+
         //Lấy tất cả lịch hẹn theo khách hàng đăng nhập
         public async Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync()
         {
@@ -322,6 +323,61 @@ namespace SWP391.backend.services
 
             return responseDto;
         }
+
+
+        public async Task<CustomerAppointmentsDTO> GetAppointmentsFromBuyingPackageAsync(int childId)
+        {
+            var customerId = GetCurrentUserId();
+
+            var appointments = await _context.Appointments
+                .Where(a => a.Children.UserId == customerId && // Chỉ lấy lịch hẹn của khách hàng hiện tại
+                            a.ChildrenId == childId &&        // Chỉ lấy lịch hẹn của đứa trẻ cụ thể
+                            a.VaccinePackageId.HasValue &&    // Chỉ lấy lịch hẹn thuộc gói vắc xin
+                            a.Status == "Pending")           // Chỉ lấy lịch hẹn có trạng thái Pending
+                .Include(a => a.Children)
+                .Include(a => a.Vaccine)
+                .Include(a => a.VaccinePackage)
+                .ToListAsync();
+
+            var responseDto = new CustomerAppointmentsDTO();
+
+            // Nhóm lịch hẹn theo VaccinePackageId
+            var packageAppointments = appointments
+                .GroupBy(a => a.VaccinePackageId)
+                .ToList();
+
+            // Xử lý dữ liệu trả về
+            foreach (var group in packageAppointments)
+            {
+                var firstAppointment = group.First();
+
+                var packageDto = new PackageVaccineAppointmentDTO
+                {
+                    VaccinePackageId = firstAppointment.VaccinePackageId.Value,
+                    VaccinePackageName = firstAppointment.VaccinePackage?.Name ?? "Unknown Package",
+                    ChildrenId = firstAppointment.ChildrenId,
+                    ChildFullName = firstAppointment.Children?.ChildrenFullname ?? "N/A",
+                    ContactPhoneNumber = firstAppointment.Children?.FatherPhoneNumber ?? "N/A",
+                    VaccineItems = group.Select((a, index) => new VaccineItemDTO
+                    {
+                        Id = a.Id,
+                        VaccineId = a.VaccineId,
+                        VaccineName = a.Vaccine?.Name ?? "Unknown Vaccine",
+                        DoseSequence = index + 1, // Đánh số mũi theo thứ tự
+                        DateInjection = a.DateInjection,
+                        Status = a.Status,
+                        ProcessStep = a.ProcessStep,
+                        PaymentId = a.PaymentId
+                    }).ToList()
+                };
+
+                responseDto.PackageVaccineAppointments.Add(packageDto);
+            }
+
+            return responseDto;
+        }
+
+
 
 
         //Gọi khi từ bước 2 sang 3
