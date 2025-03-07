@@ -241,9 +241,14 @@ namespace SWP391.backend.services
             {
                 throw new Exception("Vaccination detail not found.");
             }
-            context.VaccinationDetails.Remove(vaccinationDetail);
+
+            // Thay vì xóa, cập nhật VaccineId và ActualInjectionDate thành null
+            vaccinationDetail.VaccineId = null;
+            vaccinationDetail.ActualInjectionDate = null;
+            vaccinationDetail.Month = null;
             await context.SaveChangesAsync();
             return true;
         }
+
     }
 }
