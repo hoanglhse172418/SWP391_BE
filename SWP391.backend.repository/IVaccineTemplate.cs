@@ -12,7 +12,7 @@ namespace SWP391.backend.repository
     public interface IVaccineTemplate
     {
         Task<List<VaccineTemplate>> GetAll(GetAllDTO request);
-        //Task<List<VaccineTemplate>> Create(CreateVaccineTemplateDTO request);
+        Task<List<VaccineTemplate>> Create(CreateVaccineTemplateDTO request);
         Task<VaccineTemplate> Update(int id, UpdateVaccineTemplateDTO request);
         Task<VaccineTemplate> GetById(int id);
         Task<List<VaccineTemplateDTO>> GetVaccineTemplatesbyProfileId(int ProfileId);
