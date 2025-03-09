@@ -495,6 +495,20 @@ namespace SWP391.backend.services
             return true;
         }
 
+
+        public async Task<bool> CancelAppointmentAsync(int appointmentId)
+        {
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+            if (appointment == null) return false;
+
+            appointment.Status = AppointmentStatus.Canceled;
+            appointment.ProcessStep = ProcessStepEnum.Canceled;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
         private int? GetCurrentUserId()
         {
             var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id");
