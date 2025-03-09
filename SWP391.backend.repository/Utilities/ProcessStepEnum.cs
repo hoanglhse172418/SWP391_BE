@@ -11,6 +11,7 @@ namespace SWP391.backend.repository.Utilities
         public const string Booked = "Booked";         
         public const string ConfirmInfo = "ConfirmInfo";   
         public const string WaitingInject = "WaitingInject";    
-        public const string Injected = "Injected";     
+        public const string Injected = "Injected";
+        public const string Canceled = "Canceled";
     }
 }

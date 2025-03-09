@@ -178,5 +178,14 @@ namespace SWP391.backend.api.Controllers
             var result = await this.a.GetAppointmentsFromBuyingPackageAsync(childId);
             return Ok(result);
         }
+
+        [HttpPut("cancel-appointment/{appointmentId}")]
+        public async Task<IActionResult> CancelAppointment(int appointmentId)
+        {
+            var result = await this.a.CancelAppointmentAsync(appointmentId);
+            if (!result) return BadRequest("Cannot cancel appointment, not found appointment or something");
+
+            return Ok(new { message = "Cancelled appintment successfully !" });
+        }
     }
 }
