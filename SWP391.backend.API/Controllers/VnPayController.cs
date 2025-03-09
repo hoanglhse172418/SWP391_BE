@@ -142,6 +142,8 @@ namespace SWP391.backend.api.Controllers
             {
                 // Thanh toán thành công
                 payment.PaymentStatus = PaymentStatusEnum.Paid;
+                payment.TransactionId = transactionId;
+                payment.PaymentMethod = "VNPay";
                 context.Payments.Update(payment);
 
                 await context.SaveChangesAsync();
