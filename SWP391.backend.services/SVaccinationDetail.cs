@@ -205,6 +205,8 @@ namespace SWP391.backend.services
                 // Chỉ cập nhật ActualInjectionDate (Không thay đổi ExpectedInjectionDate)
                 vaccinationDetail.ActualInjectionDate = child.Dob.Value.AddMonths(request.Month);
 
+                vaccinationDetail.Month = request.Month;
+
                 // Lưu vào database
                 context.VaccinationDetails.Update(vaccinationDetail);
                 await context.SaveChangesAsync();
