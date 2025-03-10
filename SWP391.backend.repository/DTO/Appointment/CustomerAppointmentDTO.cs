@@ -17,6 +17,7 @@ public class SingleVaccineAppointmentDTO
     public string? Status { get; set; }
     public string? ProcessStep { get; set; }
     public int? PaymentId { get; set; }
+    public string? InjectionNote { get; set; }
 }
 
 public class PackageVaccineAppointmentDTO
@@ -39,4 +40,5 @@ public class VaccineItemDTO
     public string? Status { get; set; }
     public string? ProcessStep { get; set; }
     public int? PaymentId { get; set; }
+    public string? InjectionNote { get; set;}
 }

@@ -40,6 +40,7 @@ namespace SWP391.backend.repository.DTO.Appointment
         public int? DoctorId { get; set; }
         public int? RoomId { get; set; }
         public int? PaymentId { get; set; }
+        public string? InjectionNote { get; set; } //phản ứng sau tiêm
     }
 
     public class TodayAppointmentDTO
@@ -66,5 +67,10 @@ namespace SWP391.backend.repository.DTO.Appointment
         public int VaccineId { get; set; }
         public int DoctorId { get; set; }
         public int RoomId { get;set; }
+    }
+
+    public class EditInjectionNoteDTO
+    {
+        public string? InjectionNote { get; set; }
     }
 }
