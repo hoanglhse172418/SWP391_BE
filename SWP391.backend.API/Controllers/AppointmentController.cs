@@ -141,9 +141,22 @@ namespace SWP391.backend.api.Controllers
         public async Task<IActionResult> UpdateAppointmentForStaff(int id, [FromBody] EditAppointmentDetailDTO dto)
         {
             var result = await this.a.ConfirmAppointmentAsync(id, dto);
-            if (!result) return BadRequest("Cannot update appointment");
-
-            return Ok(new { message = "Appointment updated successfully" });
+            if (result == 0)
+            {
+                return NotFound("Appointment not found");
+            }
+            else if (result == 1)
+            {
+                return Ok("Update appointment with Single type successfully !");
+            }
+            else if (result == 2) 
+            {
+                return Ok("Payment has created before. Update appointment with Package type successfully !");
+            }
+            else
+            {
+                return Ok("Update appointment with Package type successfully !");
+            }
         }
 
         [HttpPut("confirm-injection-by-doctor/{appointmentId}")]
