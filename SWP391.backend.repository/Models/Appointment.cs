@@ -21,6 +21,7 @@ namespace SWP391.backend.repository.Models
         public string? ProcessStep { get; set; }
         public string? DiseaseName { get; set; }
         public int? PaymentId { get; set; }
+        public string? InjectionNote { get; set; }
 
         public virtual Child? Children { get; set; }
         public virtual Payment? Payment { get; set; }
