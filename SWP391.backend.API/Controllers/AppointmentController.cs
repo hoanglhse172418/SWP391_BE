@@ -149,7 +149,7 @@ namespace SWP391.backend.api.Controllers
             {
                 return Ok("Update appointment with Single type successfully !");
             }
-            else if (result == 2) 
+            else if (result == 2)
             {
                 return Ok("Payment has created before. Update appointment with Package type successfully !");
             }
@@ -199,6 +199,14 @@ namespace SWP391.backend.api.Controllers
             if (!result) return BadRequest("Cannot cancel appointment, not found appointment or something");
 
             return Ok(new { message = "Cancelled appintment successfully !" });
+        }
+
+        [HttpPut("update-injection-note")]
+        public async Task<IActionResult> UpdateInjectionNote(int appointmentId, [FromBody] EditInjectionNoteDTO dto)
+        {
+            var result = await this.a.UpdateInjectionNoteAsync(appointmentId, dto);
+            if (!result) return BadRequest("Cannot update injection note. Appointment not found or something");
+            return Ok(new { message = "Update injection note for appointment successfully !" });
         }
     }
 }

@@ -65,6 +65,7 @@ namespace SWP391.backend.services
                     Status = AppointmentStatus.Pending,
                     ProcessStep = ProcessStepEnum.Booked,
                     PaymentId = null,
+                    InjectionNote = null,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -102,6 +103,7 @@ namespace SWP391.backend.services
                         Status = AppointmentStatus.Pending,
                         ProcessStep = ProcessStepEnum.Booked,
                         PaymentId = null,
+                        InjectionNote = null,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -324,7 +326,7 @@ namespace SWP391.backend.services
             return responseDto;
         }
 
-
+        //Lấy lịch hẹn theo gói đang mua
         public async Task<CustomerAppointmentsDTO> GetAppointmentsFromBuyingPackageAsync(int childId)
         {
             var customerId = GetCurrentUserId();
@@ -376,8 +378,6 @@ namespace SWP391.backend.services
 
             return responseDto;
         }
-
-
 
 
         //Gọi khi từ bước 2 sang 3
@@ -502,7 +502,7 @@ namespace SWP391.backend.services
             return true;
         }
 
-
+        //Hủy lịch hẹn
         public async Task<bool> CancelAppointmentAsync(int appointmentId)
         {
             var appointment = await _context.Appointments
@@ -516,6 +516,19 @@ namespace SWP391.backend.services
 
             return true;
         }
+        
+        //Cập nhật phản ứng sau tiêm
+        public async Task<bool> UpdateInjectionNoteAsync(int appointmentId, EditInjectionNoteDTO dto)
+        {
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+            if (appointment == null) return false;
+            appointment.InjectionNote = dto.InjectionNote;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private int? GetCurrentUserId()
         {
             var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id");
