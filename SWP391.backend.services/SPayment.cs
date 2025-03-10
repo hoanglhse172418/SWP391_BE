@@ -20,7 +20,7 @@ namespace SWP391.backend.services
         }
 
         //Tạo payment
-        public async Task<bool> CreatePaymentForAppointment(int appointmentId)
+        public async Task<int> CreatePaymentForAppointment(int appointmentId)
         {
             var appointment = await _context.Appointments
                 .Include(a => a.Vaccine)
@@ -28,7 +28,7 @@ namespace SWP391.backend.services
                 .ThenInclude(a => a.VaccinePackageItems)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-            if (appointment == null) return false;
+            if (appointment == null) return 0;
 
             //Xử lý cho vắc xin lẻ
             if (appointment.Type == "Single")
@@ -60,7 +60,7 @@ namespace SWP391.backend.services
                 appointment.PaymentId = payment.Id;
                 await _context.SaveChangesAsync();
 
-                return true;
+                return 1; //Lẻ
             }
 
             else
@@ -77,7 +77,7 @@ namespace SWP391.backend.services
 
 
                 //Nếu đã tồn tại Payment, trả về false
-                if (existingPaymentId.HasValue) return false;
+                if (existingPaymentId.HasValue) return 2; //Đã tồn tại payment, chỉ cần cập nhật status của appointment
 
 
                 // Nếu chưa có Payment, tạo mới
@@ -123,7 +123,7 @@ namespace SWP391.backend.services
                 }
                 await _context.SaveChangesAsync();
 
-                return true;
+                return 3;
             }         
         }
 

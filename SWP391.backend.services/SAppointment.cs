@@ -381,11 +381,11 @@ namespace SWP391.backend.services
 
 
         //Gọi khi từ bước 2 sang 3
-        public async Task<bool> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto)
+        public async Task<int> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto)
         {
             var appointment = await _context.Appointments
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
-            if (appointment == null) return false;
+            if (appointment == null) return -1;
 
             appointment.Status = AppointmentStatus.Processing;
             appointment.ProcessStep = ProcessStepEnum.ConfirmInfo;
@@ -395,9 +395,16 @@ namespace SWP391.backend.services
             appointment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            bool paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
+            int paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
 
-            return paymentCreated;
+            if (paymentCreated == 0)
+                return 0;
+            else if (paymentCreated == 1)
+                return 1;
+            else if (paymentCreated == 2)
+                return 2;
+            else
+                return 3;
         }
 
         // Dùng để cập nhật ngày tiêm cho các mũi bác sĩ chọn (có thể 1 hoặc nhiều mũi)

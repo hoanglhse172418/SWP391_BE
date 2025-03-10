@@ -14,7 +14,7 @@ namespace SWP391.backend.repository
         Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync();
         Task<List<AppointmentDTO>> GetAppointmentByChildId(int childId);
         Task<AppointmentDetailDTO?> GetAppointmentByIdAsync(int appointmentId);
-        Task<bool> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto);      
+        Task<int> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto);
         Task<List<TodayAppointmentDTO>> GetAppointmentsToday();
         Task<List<FutureAppointmentDTO>> GetAppointmentsFuture();
         Task<bool> ConfirmInjectionAsync(int appointmentId);
