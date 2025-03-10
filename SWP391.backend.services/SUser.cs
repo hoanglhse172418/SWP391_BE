@@ -264,10 +264,10 @@ namespace SWP391.backend.services
                     </head>
                     <body>
                         <p>Hello <b>" + email + @"</b>,</p>
-                        <p>Your account has been created in <span class='bold'>Module Shop Furniture</span> successfully.</p>
+                        <p>Your account has been created in <span class='bold'>Vaccinecare</span> successfully.</p>
                         <br>
                         <p><b>Best Regards,</b></p>
-                        <p><b>Team Module Shop Furniture</b></p>
+                        <p><b>Team Vaccinecare</b></p>
                     </body>
                     </html>",
                     IsBodyHtml = true,
