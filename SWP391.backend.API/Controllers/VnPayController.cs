@@ -154,7 +154,7 @@ namespace SWP391.backend.api.Controllers
                 context.Appointments.Update(appointment);
 
                 await context.SaveChangesAsync();
-                return Redirect($"{returnUrlS}?status=success&transactionId={transactionId}"); 
+                return Redirect("http://localhost:5173/paymentss"); 
 
             }
             else
@@ -164,7 +164,7 @@ namespace SWP391.backend.api.Controllers
                 context.Payments.Update(payment);
 
                 await context.SaveChangesAsync();
-                return Redirect($"{returnUrlF}?status=fail&errorCode={responseCode}");
+                return Redirect("http://localhost:5173/paymentFaild");
             }
         }
     }
