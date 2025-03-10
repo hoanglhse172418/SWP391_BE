@@ -127,43 +127,50 @@ namespace SWP391.backend.api.Controllers
         [HttpGet("ReturnUrl")]
         public async Task<IActionResult> ReturnUrl()
         {
-            // Xử lý thông tin từ query string và chuyển đổi thành string
-            var responseCode = Request.Query["vnp_ResponseCode"].ToString();
-            var transactionId = Request.Query["vnp_TxnRef"].ToString();
-            var returnUrlS = Request.Query["returnUrlS"].ToString();
-            var returnUrlF = Request.Query["returnUrlF"].ToString();
-
-            var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.PaymentId.ToString() == transactionId);
-
-            // Kiểm tra mã phản hồi và thực hiện logic cần thiết
-            var payment = await context.Payments.FirstOrDefaultAsync(p => p.Id.ToString() == transactionId);
-            if (payment == null)
+            try
             {
-                return Content("Không tìm thấy giao dịch với mã: " + transactionId);
+                // Xử lý thông tin từ query string
+                var responseCode = Request.Query["vnp_ResponseCode"].ToString();
+                var transactionId = Request.Query["vnp_TxnRef"].ToString();
+
+                // Kiểm tra payment trước
+                var payment = await context.Payments.FirstOrDefaultAsync(p => p.Id.ToString() == transactionId);
+                if (payment == null)
+                {
+                    return Redirect("http://localhost:5173/paymentFaild");
+                }
+
+                var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.PaymentId.ToString() == transactionId);
+
+                if (responseCode == "00")
+                {
+                    // Thanh toán thành công
+                    payment.PaymentStatus = PaymentStatusEnum.Paid;
+                    payment.TransactionId = transactionId;
+                    payment.PaymentMethod = "VNPay";
+                    context.Payments.Update(payment);
+
+                    if (appointment != null)
+                    {
+                        appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+                        context.Appointments.Update(appointment);
+                    }
+
+                    await context.SaveChangesAsync();
+                    return Redirect("http://localhost:5173/paymentss");
+                }
+                else
+                {
+                    // Thanh toán thất bại
+                    payment.PaymentStatus = PaymentStatusEnum.NotPaid;
+                    context.Payments.Update(payment);
+                    await context.SaveChangesAsync();
+                    return Redirect("http://localhost:5173/paymentFaild");
+                }
             }
-
-            if (responseCode == "00")
+            catch (Exception ex)
             {
-                // Thanh toán thành công
-                payment.PaymentStatus = PaymentStatusEnum.Paid;
-                payment.TransactionId = transactionId;
-                payment.PaymentMethod = "VNPay";
-                context.Payments.Update(payment);
-
-                appointment.ProcessStep=ProcessStepEnum.WaitingInject;
-                context.Appointments.Update(appointment);
-
-                await context.SaveChangesAsync();
-                return Redirect("http://localhost:5173/paymentss"); 
-
-            }
-            else
-            {
-                // Thanh toán thất bại
-                payment.PaymentStatus = PaymentStatusEnum.NotPaid;
-                context.Payments.Update(payment);
-
-                await context.SaveChangesAsync();
+                // Log error
                 return Redirect("http://localhost:5173/paymentFaild");
             }
         }
