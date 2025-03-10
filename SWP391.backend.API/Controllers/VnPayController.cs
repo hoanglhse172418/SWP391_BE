@@ -130,6 +130,10 @@ namespace SWP391.backend.api.Controllers
             // Xử lý thông tin từ query string và chuyển đổi thành string
             var responseCode = Request.Query["vnp_ResponseCode"].ToString();
             var transactionId = Request.Query["vnp_TxnRef"].ToString();
+            var returnUrlS = Request.Query["returnUrlS"].ToString();
+            var returnUrlF = Request.Query["returnUrlF"].ToString();
+
+            var appointment = await context.Appointments.FirstOrDefaultAsync(a => a.PaymentId.ToString() == transactionId);
 
             // Kiểm tra mã phản hồi và thực hiện logic cần thiết
             var payment = await context.Payments.FirstOrDefaultAsync(p => p.Id.ToString() == transactionId);
@@ -146,8 +150,12 @@ namespace SWP391.backend.api.Controllers
                 payment.PaymentMethod = "VNPay";
                 context.Payments.Update(payment);
 
+                appointment.ProcessStep=ProcessStepEnum.WaitingInject;
+                context.Appointments.Update(appointment);
+
                 await context.SaveChangesAsync();
-                return Content("Thanh toán thành công. Mã giao dịch: " + transactionId);
+                return Redirect($"{returnUrlS}?status=success&transactionId={transactionId}"); 
+
             }
             else
             {
@@ -156,7 +164,7 @@ namespace SWP391.backend.api.Controllers
                 context.Payments.Update(payment);
 
                 await context.SaveChangesAsync();
-                return Content("Thanh toán không thành công. Mã lỗi: " + responseCode);
+                return Redirect($"{returnUrlF}?status=fail&errorCode={responseCode}");
             }
         }
     }
