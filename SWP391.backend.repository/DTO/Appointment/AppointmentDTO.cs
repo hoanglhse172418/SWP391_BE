@@ -22,6 +22,7 @@ namespace SWP391.backend.repository.DTO.Appointment
         public int? RoomId { get; set; }
         public int? PaymentId { get; set; }
         public DateTime? DateInjection { get; set; }
+        public string? InjectionNote { get; set; }
     }
 
     public class AppointmentDetailDTO
@@ -60,7 +61,6 @@ namespace SWP391.backend.repository.DTO.Appointment
         public DateTime DateInjection { get; set; }
         public string Status { get; set; }
     }
-
 
     public class EditAppointmentDetailDTO
     {

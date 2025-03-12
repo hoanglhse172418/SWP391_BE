@@ -162,7 +162,8 @@ namespace SWP391.backend.services
                 ProcessStep = appointment.ProcessStep,
                 DoctorId = appointment.DoctorId,
                 RoomId = appointment.RoomId,
-                PaymentId = appointment.PaymentId
+                PaymentId = appointment.PaymentId,
+                InjectionNote = appointment.InjectionNote
             };
         }
 
@@ -212,7 +213,8 @@ namespace SWP391.backend.services
                 UpdatedAt = a.UpdatedAt,
                 RoomId = a.RoomId,
                 PaymentId = a.PaymentId,
-                DateInjection = a.DateInjection
+                DateInjection = a.DateInjection,
+                InjectionNote = a.InjectionNote,
             }).ToList();
         }
 
@@ -254,7 +256,6 @@ namespace SWP391.backend.services
                 Status = a.Status
             }).ToList();
         }
-
 
         //Lấy tất cả lịch hẹn theo khách hàng đăng nhập
         public async Task<CustomerAppointmentsDTO> GetCustomerAppointmentsAsync()
@@ -378,7 +379,6 @@ namespace SWP391.backend.services
 
             return responseDto;
         }
-
 
         //Gọi khi từ bước 2 sang 3
         public async Task<int> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto)
