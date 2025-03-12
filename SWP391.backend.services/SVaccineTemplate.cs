@@ -195,29 +195,78 @@ namespace SWP391.backend.services
 
         public async Task<List<VaccineTemplateDTO>> GetVaccineTemplatesbyProfileId(int ProfileId)
         {
-            var vaccineTemplates = await context.VaccineTemplates
-                .Join(context.VaccinationDetails.Where(vd => vd.VaccinationProfileId == ProfileId),
-                      vt => vt.DiseaseId,
-                      vd => vd.DiseaseId,
-                      (vt, vd) => new VaccineTemplateDTO
-                      {
-                          Id = vt.Id,
-                          DiseaseId = (int)vt.DiseaseId,
-                          Description = vt.Description,
-                          Month = vt.Month,
-                          AgeRange = vt.AgeRange,
-                          DoseNumber = (int)vt.DoseNumber,
-                          Notes = vt.Notes,
-                          ExpectedInjectionDate = vd.ExpectedInjectionDate // Lấy từ VaccinationDetail
-                      })
-                .ToListAsync();
+            // Lấy danh sách vaccine templates liên quan đến profile
+            var templates = await context.VaccineTemplates
+                .Where(vt => context.VaccinationDetails
+                    .Any(vd => vd.VaccinationProfileId == ProfileId && vd.DiseaseId == vt.DiseaseId))
+                .OrderBy(vt => vt.DiseaseId)
+                .ThenBy(vt => vt.Month)
+                .ToListAsync(); // ⚠ Lấy về client-side trước khi xử lý
 
-            if (!vaccineTemplates.Any())
+            // Lấy danh sách ngày tiêm của từng bệnh, trước tiên lấy toàn bộ dữ liệu từ database
+            var detailsList = await context.VaccinationDetails
+                .Where(vd => vd.VaccinationProfileId == ProfileId)
+                .OrderBy(vd => vd.DiseaseId)
+                .ThenBy(vd => vd.ExpectedInjectionDate)
+                .ToListAsync(); // ⚠ Đưa dữ liệu về client-side trước khi dùng GroupBy
+
+            // Nhóm dữ liệu theo DiseaseId (thực hiện trên bộ nhớ)
+            var injectionDates = detailsList
+                .GroupBy(vd => vd.DiseaseId)
+                .ToDictionary(g => g.Key, g => g.Select(vd => vd.ExpectedInjectionDate).ToList());
+
+            // Đánh số thứ tự cho VaccineTemplate theo từng DiseaseId
+            var groupedTemplates = templates
+                .GroupBy(vt => vt.DiseaseId)
+                .SelectMany(g => g.Select((vt, index) => new { Template = vt, RowNumber = index }))
+                .ToList(); // ⚠ Đưa về danh sách trước khi gán ngày
+
+            // Gán ngày tiêm dự kiến theo thứ tự từng bệnh
+            var result = new List<VaccineTemplateDTO>();
+
+            foreach (var item in groupedTemplates)
+            {
+                var template = item.Template;
+                var rowNumber = item.RowNumber;
+
+                // Kiểm tra nếu có expected injection dates cho disease này
+                if (injectionDates.TryGetValue(template.DiseaseId, out var dates) && rowNumber < dates.Count)
+                {
+                    result.Add(new VaccineTemplateDTO
+                    {
+                        Id = template.Id,
+                        DiseaseId = template.DiseaseId ?? 0,
+                        Description = template.Description,
+                        Month = template.Month,
+                        AgeRange = template.AgeRange,
+                        DoseNumber = template.DoseNumber ?? 0,
+                        Notes = template.Notes,
+                        ExpectedInjectionDate = dates[rowNumber] // Lấy đúng ngày tiêm theo thứ tự
+                    });
+                }
+                else
+                {
+                    // Nếu không có ngày tiêm, bỏ qua hoặc gán null
+                    result.Add(new VaccineTemplateDTO
+                    {
+                        Id = template.Id,
+                        DiseaseId = template.DiseaseId ?? 0,
+                        Description = template.Description,
+                        Month = template.Month,
+                        AgeRange = template.AgeRange,
+                        DoseNumber = template.DoseNumber ?? 0,
+                        Notes = template.Notes,
+                        ExpectedInjectionDate = null // Hoặc gán ngày mặc định
+                    });
+                }
+            }
+
+            if (!result.Any())
             {
                 throw new Exception("No vaccine templates found for this profile.");
             }
 
-            return vaccineTemplates;
+            return result;
         }
 
         public async Task<VaccineTemplate> GetById(int id)
