@@ -13,5 +13,6 @@ namespace SWP391.backend.repository
         Task<int> UpdatePaymentStatus(int appointmentId, string? paymentMethod);
         Task<PaymentDetailDTO?> GetPaymentDetailByAppointmentIdAsync(int appointmentId);
         Task<PaymentDetailDTO?> GetPaymentDetailByPaymentId(int paymentId);
+        Task<List<PaymentDetailDTO>> GetPaymentsByCurrentUserAsync();
     }
 }

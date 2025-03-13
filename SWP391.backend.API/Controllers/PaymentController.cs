@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SWP391.backend.repository;
 
 namespace SWP391.backend.api.Controllers
@@ -51,6 +52,25 @@ namespace SWP391.backend.api.Controllers
                 return Ok("Payment was created ! Update appointment process");
             }
             return Ok("Payment status updated to Paid successfully.");
+        }
+
+        [Authorize]
+        [HttpGet("get-payments-for-current-user")]
+        public async Task<IActionResult> GetUserPayments()
+        {
+            try
+            {
+                var payments = await this.p.GetPaymentsByCurrentUserAsync();
+                if (payments == null || !payments.Any())
+                {
+                    return NotFound(new { message = "Không tìm thấy hóa đơn nào cho người dùng này." });
+                }
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy danh sách hóa đơn.", error = ex.Message });
+            }
         }
     }
 }
