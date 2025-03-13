@@ -208,5 +208,18 @@ namespace SWP391.backend.api.Controllers
             if (!result) return BadRequest("Cannot update injection note. Appointment not found or something");
             return Ok(new { message = "Update injection note for appointment successfully !" });
         }
+
+        [HttpGet("get-by-package-payment/{appointmentId}")]
+        public async Task<IActionResult> GetAppointmentsByPackageAndPayment(int appointmentId)
+        {
+            var appointments = await this.a.GetAppointmentsByPackageAndPaymentAsync(appointmentId);
+
+            if (appointments == null || appointments.Count == 0)
+            {
+                return NotFound(new { message = "Không tìm thấy lịch hẹn nào thuộc gói này!" });
+            }
+
+            return Ok(appointments);
+        }
     }
 }

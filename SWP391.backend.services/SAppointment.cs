@@ -529,6 +529,46 @@ namespace SWP391.backend.services
             return true;
         }
 
+        public async Task<List<AppointmentDTO>> GetAppointmentsByPackageAndPaymentAsync(int appointmentId)
+        {
+            // Tìm lịch hẹn hiện tại để lấy VaccinePackageId và PaymentId
+            var appointment = await _context.Appointments
+                .Where(a => a.Id == appointmentId)
+                .Select(a => new { a.VaccinePackageId, a.PaymentId })
+                .FirstOrDefaultAsync();
+
+            // Nếu không tìm thấy lịch hẹn hoặc không thuộc gói nào, trả về danh sách rỗng
+            if (appointment == null || !appointment.VaccinePackageId.HasValue || !appointment.PaymentId.HasValue)
+                return new List<AppointmentDTO>();
+
+            // Lấy tất cả lịch hẹn thuộc cùng VaccinePackageId và PaymentId
+            var appointments = await _context.Appointments
+                .Where(a => a.VaccinePackageId == appointment.VaccinePackageId &&
+                            a.PaymentId == appointment.PaymentId)
+                .Select(a => new AppointmentDTO
+                {
+                    Id = a.Id,
+                    ChildrenId = a.ChildrenId,
+                    VaccinePackageId = a.VaccinePackageId,
+                    DoctorId = a.DoctorId,
+                    DiaseaseName = a.DiseaseName,
+                    VaccineId = a.VaccineId,
+                    Type = a.Type,
+                    Status = a.Status,
+                    ProcessStep = a.ProcessStep,
+                    CreatedAt = a.CreatedAt,
+                    UpdatedAt = a.UpdatedAt,
+                    RoomId = a.RoomId,
+                    PaymentId = a.PaymentId,
+                    DateInjection = a.DateInjection,
+                    InjectionNote = a.ProcessStep // Có thể thay đổi nếu cần
+                })
+                .ToListAsync();
+
+            return appointments;
+        }
+
+
         private int? GetCurrentUserId()
         {
             var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id");
