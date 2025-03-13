@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO.Payment;
 using SWP391.backend.repository.Models;
@@ -8,15 +9,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace SWP391.backend.services
 {
     public class SPayment : IPayment
     {
         private readonly swpContext _context;
-        public SPayment(swpContext context)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public SPayment(swpContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         //Tạo payment
@@ -216,6 +220,51 @@ namespace SWP391.backend.services
             };
         }
 
+        //Lấy hóa đơn liên quan đến user đăng nhập hiện tại
+        public async Task<List<PaymentDetailDTO>> GetPaymentsByCurrentUserAsync()
+        {
+            var customerId = GetCurrentUserId();
+            if (customerId == null) return new List<PaymentDetailDTO>();
 
+
+            var payments = await _context.Payments
+                .Include(p => p.Appointments)
+                .ThenInclude(a => a.Children)
+                .Include(p => p.PaymentDetails)
+                .ThenInclude(pd => pd.Vaccine) 
+                .Where(p => p.Appointments.Any(a => a.ChildrenId != null && a.Children.UserId == customerId))
+                .ToListAsync();
+
+
+            var paymentDtos = payments.Select(p => new PaymentDetailDTO
+            {
+                PaymentId = p.Id,
+                Type = p.Appointments.Select(a => a.Type).FirstOrDefault(), //Single hoặc Package
+                TotalPrice = p.TotalPrice ?? 0,
+                PaymentMethod = p.PaymentMethod ?? "Unknown",
+                PaymentStatus = p.PaymentStatus,
+                PackageProcessStatus = p.PackageProcessStatus,
+                Items = p.PaymentDetails.Select(d => new PaymentItemDTO
+                {
+                    VaccineId = d.VaccineId,
+                    VaccineName = d.Vaccine != null ? d.Vaccine.Name : "Unknown",
+                    DoseNumber = d.DoseNumber ?? 0,
+                    DoseRemaining = d.DoseRemaining ?? 0,
+                    PricePerDose = d.PricePerDose ?? 0
+                }).ToList()
+            }).ToList();
+
+            return paymentDtos;
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("Id");
+            if (claim != null && int.TryParse(claim.Value, out int userId))
+            {
+                return userId;
+            }
+            return null;
+        }
     }
 }

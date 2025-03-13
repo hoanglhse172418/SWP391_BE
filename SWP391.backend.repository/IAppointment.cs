@@ -1,4 +1,5 @@
 ﻿using SWP391.backend.repository.DTO.Appointment;
+using SWP391.backend.repository.DTO.Payment;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,6 @@ namespace SWP391.backend.repository
         Task<bool> CancelAppointmentAsync(int appointmentId);
         Task<bool> UpdateInjectionNoteAsync(int appointmentId, EditInjectionNoteDTO dto);
         Task<List<AppointmentDTO>> GetAppointmentsByPackageAndPaymentAsync(int appointmentId);
+        
     }
 }

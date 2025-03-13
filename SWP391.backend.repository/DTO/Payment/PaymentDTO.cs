@@ -9,6 +9,7 @@ namespace SWP391.backend.repository.DTO.Payment
     public class PaymentDetailDTO
     {
         public int PaymentId { get; set; }
+        public string? Type { get; set; }
         public decimal? TotalPrice { get; set; }
         public string? PaymentMethod { get; set; }
         public string? PaymentStatus { get; set; }
