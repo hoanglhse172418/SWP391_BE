@@ -407,46 +407,52 @@ namespace SWP391.backend.services
                 return 3;
         }
 
+        
         // Dùng để cập nhật ngày tiêm cho các mũi bác sĩ chọn (có thể 1 hoặc nhiều mũi)
         public async Task<bool> UpdateMultipleInjectionDatesAsync(List<(int appointmentId, DateTime newDate)> updates)
         {
             var appointmentIds = updates.Select(u => u.appointmentId).ToList();
+
+            // Lấy danh sách các appointment cần cập nhật
             var appointments = await _context.Appointments
-                .Where(a => appointmentIds.Contains(a.Id) && a.Status == "Pending") // Chỉ lấy các lịch hẹn chưa hoàn thành
+                .Where(a => appointmentIds.Contains(a.Id) && a.Status == "Pending")
                 .ToListAsync();
 
-            if (appointments == null || !appointments.Any())
+            if (!appointments.Any())
                 return false;
 
-            Dictionary<int, DateTime> updatedDates = new();
+            // Tạo dictionary chứa ngày mới
+            Dictionary<int, DateTime> updatedDates = updates.ToDictionary(u => u.appointmentId, u => u.newDate);
 
-            // Cập nhật ngày tiêm cho các mũi mà bác sĩ đã chỉnh sửa
-            foreach (var update in updates)
+            // Cập nhật ngày tiêm cho các appointment cần chỉnh sửa
+            foreach (var appointment in appointments)
             {
-                var appointment = appointments.FirstOrDefault(a => a.Id == update.appointmentId);
-                if (appointment != null)
+                if (updatedDates.TryGetValue(appointment.Id, out DateTime newDate))
                 {
-                    appointment.DateInjection = update.newDate;
+                    appointment.DateInjection = newDate;
                     appointment.UpdatedAt = DateTime.UtcNow;
-                    updatedDates[appointment.Id] = update.newDate;
                 }
             }
 
-            // Tìm tất cả các lịch hẹn khác có cùng `PaymentId` và cập nhật ngày tiêm
-            foreach (var appointment in appointments)
-            {
-                if (!appointment.PaymentId.HasValue) continue; // Chỉ xử lý nếu có PaymentId
+            // Lấy danh sách PaymentId cần xử lý
+            var paymentIds = appointments.Where(a => a.PaymentId.HasValue).Select(a => a.PaymentId.Value).Distinct().ToList();
 
-                // Lấy tất cả các lịch hẹn thuộc cùng gói (PaymentId giống nhau)
-                var relatedAppointments = await _context.Appointments
-                    .Where(a => a.PaymentId == appointment.PaymentId && a.Status == "Pending")
+            // Lấy tất cả các lịch hẹn liên quan
+            var relatedAppointments = await _context.Appointments
+                .Where(a => paymentIds.Contains(a.PaymentId.Value) && a.Status == "Pending")
+                .ToListAsync(); 
+
+            // Cập nhật lịch tiêm cho các mũi còn lại
+            foreach (var paymentId in paymentIds)
+            {
+                var orderedAppointments = relatedAppointments
+                    .Where(a => a.PaymentId == paymentId)
                     .OrderBy(a => updatedDates.ContainsKey(a.Id) ? updatedDates[a.Id] : a.DateInjection)
-                    .ToListAsync();
+                    .ToList(); // Chuyển sang danh sách trong bộ nhớ trước khi xử lý
 
                 DateTime? lastUpdatedDate = null;
 
-                // Cập nhật ngày tiêm cho các mũi còn lại theo thứ tự mới
-                foreach (var appt in relatedAppointments)
+                foreach (var appt in orderedAppointments)
                 {
                     if (updatedDates.ContainsKey(appt.Id))
                     {
@@ -454,7 +460,7 @@ namespace SWP391.backend.services
                     }
                     else if (lastUpdatedDate.HasValue)
                     {
-                        lastUpdatedDate = lastUpdatedDate.Value.AddDays(30); // Mỗi mũi cách nhau 30 ngày
+                        lastUpdatedDate = lastUpdatedDate.Value.AddDays(30);
                         appt.DateInjection = lastUpdatedDate.Value;
                         appt.UpdatedAt = DateTime.UtcNow;
                     }
@@ -464,6 +470,7 @@ namespace SWP391.backend.services
             await _context.SaveChangesAsync();
             return true;
         }
+
 
         //Bác sĩ gọi dùng update status sang Đã tiêm đồng thời trừ đi DoseRemaining trong PaymentDetail để theo dõi quá trình của Payment (nếu có gói)
         public async Task<bool> ConfirmInjectionAsync(int appointmentId)
