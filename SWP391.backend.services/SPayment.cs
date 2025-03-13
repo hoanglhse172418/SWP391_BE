@@ -87,9 +87,11 @@ namespace SWP391.backend.services
                     PackageProcessStatus = "NotComplete"
                 };
                 _context.Payments.Add(payment);
-                paymentId = payment.Id;
-                await _context.SaveChangesAsync();
                 
+                await _context.SaveChangesAsync();
+
+                paymentId = payment.Id;
+
 
                 var packageItemDetail = new List<PaymentDetail>();
                 decimal? totalPrice = 0;
