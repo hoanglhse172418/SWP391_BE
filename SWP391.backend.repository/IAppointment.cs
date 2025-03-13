@@ -22,5 +22,6 @@ namespace SWP391.backend.repository
         Task<CustomerAppointmentsDTO> GetAppointmentsFromBuyingPackageAsync(int childId);
         Task<bool> CancelAppointmentAsync(int appointmentId);
         Task<bool> UpdateInjectionNoteAsync(int appointmentId, EditInjectionNoteDTO dto);
+        Task<List<AppointmentDTO>> GetAppointmentsByPackageAndPaymentAsync(int appointmentId);
     }
 }
