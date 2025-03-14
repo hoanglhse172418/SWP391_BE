@@ -44,6 +44,21 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("create-doctor")]
+        public async Task<IActionResult> Createbydoctor(CreateVaccinationDetailDTO vaccinationDetail)
+        {
+            try
+            {
+                var a = await this.vd.Createbydoctor(vaccinationDetail);
+                return Ok(a);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPut]
         [Route("update/{Id}")]
         public async Task<IActionResult> Update(int Id, UpdateVaccinationDetailDTO vaccinationDetail)
