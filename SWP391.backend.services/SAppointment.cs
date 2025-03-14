@@ -383,31 +383,44 @@ namespace SWP391.backend.services
         //Gọi khi từ bước 2 sang 3
         public async Task<int> ConfirmAppointmentAsync(int appointmentId, EditAppointmentDetailDTO dto)
         {
-            var appointment = await _context.Appointments
-                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
             if (appointment == null) return -1;
 
             appointment.Status = AppointmentStatus.Processing;
             appointment.ProcessStep = ProcessStepEnum.ConfirmInfo;
-            appointment.VaccineId = (dto.VaccineId == 0 || dto.VaccineId == null) ? appointment.VaccineId : dto.VaccineId;
+
+            if (dto.VaccineId != null && dto.VaccineId > 0)
+            {
+                appointment.VaccineId = dto.VaccineId;
+            }
+
             appointment.DoctorId = dto.DoctorId;
             appointment.RoomId = dto.RoomId;
             appointment.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
-            int paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
+            try
+            {
+                int paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
 
-            if (paymentCreated == 0)
-                return 0;
-            else if (paymentCreated == 1)
-                return 1;
-            else if (paymentCreated == 2)
-                return 2;
-            else
-                return 3;
+                return paymentCreated switch
+                {
+                    0 => 0, //Không tìm thấy appointment
+                    1 => 1, //Tạo payment cho Lẻ
+                    2 => 2, //Đã có payment trong gói
+                    _ => 3  //Tạo payment mới cho gói
+                };
+            }
+            catch (Exception ex)
+            {              
+                Console.WriteLine($"Error creating payment: {ex.Message}");
+                return -2; // Lỗi khi tạo payment
+            }
         }
 
-        
+
+
         // Dùng để cập nhật ngày tiêm cho các mũi bác sĩ chọn (có thể 1 hoặc nhiều mũi)
         public async Task<bool> UpdateMultipleInjectionDatesAsync(List<(int appointmentId, DateTime newDate)> updates)
         {

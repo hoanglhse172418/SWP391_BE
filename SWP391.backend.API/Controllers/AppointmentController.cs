@@ -142,23 +142,17 @@ namespace SWP391.backend.api.Controllers
         public async Task<IActionResult> ConfirmAppointmentInfo(int id, [FromBody] EditAppointmentDetailDTO dto)
         {
             var result = await this.a.ConfirmAppointmentAsync(id, dto);
-            if (result == 0)
+
+            return result switch
             {
-                return NotFound("Appointment not found");
-            }
-            else if (result == 1)
-            {
-                return Ok("Update appointment with Single type successfully !");
-            }
-            else if (result == 2)
-            {
-                return Ok("Payment has created before. Update appointment with Package type successfully !");
-            }
-            else
-            {
-                return Ok("Update appointment with Package type successfully !");
-            }
+                0 => NotFound("Appointment not found"),
+                1 => Ok("Updated appointment with Single type successfully!"),
+                2 => Ok("Payment already exists. Appointment with Package type updated successfully!"),
+                3 => Ok("New payment created. Appointment with Package type updated successfully!"),
+                _ => BadRequest("Unknown error occurred")
+            };
         }
+
 
         [HttpPut("confirm-injection-by-doctor/{appointmentId}")]
         public async Task<IActionResult> ConfirmInjection(int appointmentId)
