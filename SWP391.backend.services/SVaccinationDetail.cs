@@ -157,7 +157,7 @@ namespace SWP391.backend.services
                     DiseaseId = request.DiseaseId,
                     VaccineId = request.VaccineId,
                     ExpectedInjectionDate = expectedInjectionDate,
-                    ActualInjectionDate = actualInjectionDate,
+                    ActualInjectionDate = null,
                     Month= request.Month,
                 };
 
@@ -172,6 +172,85 @@ namespace SWP391.backend.services
                 throw new Exception($"Error creating vaccination detail: {ex.Message}", ex);
             }
         }
+
+        public async Task<VaccinationDetail> Createbydoctor(CreateVaccinationDetailDTO request)
+        {
+            try
+            {
+                // Lấy thông tin trẻ em
+                var child = await context.Children.FindAsync(request.ChildrenId);
+                if (child == null)
+                {
+                    throw new Exception("Child not found.");
+                }
+
+                // Lấy thông tin VaccinationProfile của trẻ
+                var vaccinationProfile = await context.VaccinationProfiles
+                    .FirstOrDefaultAsync(vp => vp.ChildrenId == request.ChildrenId);
+                if (vaccinationProfile == null)
+                {
+                    throw new Exception("Vaccination profile not found.");
+                }
+
+                // Lấy thông tin VaccineTemplate
+                var template = await context.VaccineTemplates
+                    .FirstOrDefaultAsync(vt => vt.DiseaseId == request.DiseaseId);
+
+                if (template == null)
+                {
+                    throw new Exception("Vaccine template not found.");
+                }
+
+                // Xác định ngày tiêm dự kiến (ExpectedInjectionDate) dựa trên template.Month
+                DateTime expectedInjectionDate = child.Dob ?? DateTime.UtcNow;
+
+                if (template.Month.HasValue)
+                {
+                    expectedInjectionDate = child.Dob.Value.AddMonths(template.Month.Value);
+                }
+                else if (!string.IsNullOrEmpty(template.AgeRange))
+                {
+                    // Nếu AgeRange có dữ liệu dạng "X tháng" hoặc "Y năm", cần xử lý
+                    if (template.AgeRange.Contains("tháng"))
+                    {
+                        int months = int.Parse(template.AgeRange.Replace(" tháng", "").Trim());
+                        expectedInjectionDate = child.Dob.Value.AddMonths(months);
+                    }
+                }
+
+                int actualMonth = request.Month;
+
+                DateTime actualInjectionDate = child.Dob.Value.AddMonths(actualMonth);
+
+                // Kiểm tra nếu ngày tiêm thực tế < ngày tiêm dự kiến thì báo lỗi
+                if (actualInjectionDate < expectedInjectionDate)
+                {
+                    throw new Exception("Actual injection date must be equal or greater than expected injection date.");
+                }
+
+                // Tạo VaccinationDetail
+                var vaccinationDetail = new VaccinationDetail
+                {
+                    VaccinationProfileId = vaccinationProfile.Id,
+                    DiseaseId = request.DiseaseId,
+                    VaccineId = request.VaccineId,
+                    ExpectedInjectionDate = expectedInjectionDate,
+                    ActualInjectionDate = DateTime.Now,
+                    Month = request.Month,
+                };
+
+                // Lưu vào database
+                context.VaccinationDetails.Add(vaccinationDetail);
+                await context.SaveChangesAsync();
+
+                return vaccinationDetail;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error creating vaccination detail: {ex.Message}", ex);
+            }
+        }
+
 
         public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
         {
