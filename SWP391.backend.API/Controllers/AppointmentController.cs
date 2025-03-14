@@ -137,8 +137,9 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
-        [HttpPut("update-status-by-staff/step-2-to-3")]
-        public async Task<IActionResult> UpdateAppointmentForStaff(int id, [FromBody] EditAppointmentDetailDTO dto)
+        //step 2 -> 3
+        [HttpPut("update-status-by-staff/confirm-info")]
+        public async Task<IActionResult> ConfirmAppointmentInfo(int id, [FromBody] EditAppointmentDetailDTO dto)
         {
             var result = await this.a.ConfirmAppointmentAsync(id, dto);
             if (result == 0)

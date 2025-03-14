@@ -9,8 +9,11 @@ namespace SWP391.backend.repository.DTO.VaccinePackageItem
 {
     public class VaccinePackageItemDTO
     {
-        public int VaccineId { get; set; }
-        public int DoseNumber { get; set; }
+        public int? VaccineId { get; set; }
+        public string? VaccineName { get; set; }
+        public int? DoseNumber { get; set; }
+
+        public decimal? PricePerDose { get; set; }
 
     }
 }
