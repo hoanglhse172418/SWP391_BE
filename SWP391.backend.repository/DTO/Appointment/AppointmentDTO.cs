@@ -64,7 +64,7 @@ namespace SWP391.backend.repository.DTO.Appointment
 
     public class EditAppointmentDetailDTO
     {
-        public int VaccineId { get; set; }
+        public int? VaccineId { get; set; }
         public int DoctorId { get; set; }
         public int RoomId { get;set; }
     }

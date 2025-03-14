@@ -34,10 +34,9 @@ namespace SWP391.backend.services
 
             if (appointment == null) return 0;
 
-            //Xử lý cho vắc xin lẻ
+            // Xử lý cho vắc xin lẻ
             if (appointment.Type == "Single")
             {
-                // Tạo payment cho lịch hẹn vắc xin lẻ
                 var payment = new Payment
                 {
                     PaymentStatus = PaymentStatusEnum.NotPaid,
@@ -52,7 +51,7 @@ namespace SWP391.backend.services
                     VaccineId = appointment.VaccineId,
                     DoseNumber = 1,
                     DoseRemaining = 1,
-                    PricePerDose = decimal.Parse(appointment.Vaccine.Price),
+                    PricePerDose = decimal.Parse(appointment.Vaccine?.Price ?? "0"),
                 };
                 _context.PaymentDetails.Add(paymentDetail);
                 await _context.SaveChangesAsync();
@@ -60,79 +59,79 @@ namespace SWP391.backend.services
                 payment.TotalPrice = paymentDetail.PricePerDose * paymentDetail.DoseNumber;
                 await _context.SaveChangesAsync();
 
-                // Cập nhật PaymentId cho lịch hẹn
                 appointment.PaymentId = payment.Id;
                 await _context.SaveChangesAsync();
 
-                return 1; //Lẻ
+                return 1; // Lẻ
             }
 
-            else
+            // Xử lý cho gói vaccine
+            var existingPaymentId = await _context.Appointments
+                .Where(a => a.Id == appointment.Id && a.PaymentId != null)
+                .Select(a => a.PaymentId)
+                .FirstOrDefaultAsync();
+
+
+            if (existingPaymentId.HasValue && existingPaymentId > 0)
             {
-                // Kiểm tra xem có Payment nào cho cùng gói & đứa trẻ này không
-                var existingPaymentId = await _context.Appointments
-                    .Where(a => a.VaccinePackageId == appointment.VaccinePackageId
-                                && a.ChildrenId == appointment.ChildrenId
-                                && a.PaymentId != null)
-                    .Select(a => a.PaymentId)
-                    .FirstOrDefaultAsync();
+                return 2; // Đã có payment, chỉ cần cập nhật status
+            }
 
-                int paymentId;
+            // Tạo Payment mới nếu chưa có
+            var newPayment = new Payment
+            {
+                PaymentStatus = PaymentStatusEnum.NotPaid,
+                PackageProcessStatus = "NotComplete"
+            };
+            _context.Payments.Add(newPayment);
+            await _context.SaveChangesAsync();
 
+            int paymentId = newPayment.Id;
 
-                //Nếu đã tồn tại Payment, trả về false
-                if (existingPaymentId.HasValue) return 2; //Đã tồn tại payment, chỉ cần cập nhật status của appointment
+            var packageItemDetails = new List<PaymentDetail>();
+            decimal totalPrice = 0;
 
+            foreach (var vpi in appointment.VaccinePackage.VaccinePackageItems)
+            {
+                if (!vpi.VaccineId.HasValue) continue; // Bỏ qua nếu VaccineId là null
 
-                // Nếu chưa có Payment, tạo mới
-                var payment = new Payment
+                var pricePerDose = vpi.PricePerDose ?? 0;
+                var doseNumber = vpi.DoseNumber ?? 1;
+
+                var paymentDetail = new PaymentDetail
                 {
-                    PaymentStatus = PaymentStatusEnum.NotPaid,
-                    PackageProcessStatus = "NotComplete"
+                    PaymentId = paymentId,
+                    VaccineId = vpi.VaccineId.Value,
+                    DoseNumber = doseNumber,
+                    DoseRemaining = doseNumber,
+                    PricePerDose = pricePerDose
                 };
-                _context.Payments.Add(payment);
-                
-                await _context.SaveChangesAsync();
 
-                paymentId = payment.Id;
+                totalPrice += pricePerDose * doseNumber;
+                packageItemDetails.Add(paymentDetail);
+            }
 
+            _context.PaymentDetails.AddRange(packageItemDetails);
+            await _context.SaveChangesAsync();
 
-                var packageItemDetail = new List<PaymentDetail>();
-                decimal? totalPrice = 0;
-                foreach (var vpi in appointment.VaccinePackage.VaccinePackageItems)
-                {
-                    var paymentDetail = new PaymentDetail
-                    {
-                        PaymentId = paymentId,
-                        VaccineId = vpi.VaccineId,
-                        DoseNumber = vpi.DoseNumber,
-                        DoseRemaining = vpi.DoseNumber,
-                        PricePerDose = vpi.PricePerDose
-                    };
-                    totalPrice += vpi.PricePerDose * vpi.DoseNumber;
-                    packageItemDetail.Add(paymentDetail);
-                }
-                _context.PaymentDetails.AddRange(packageItemDetail);
-                await _context.SaveChangesAsync();
+            newPayment.TotalPrice = totalPrice;
+            await _context.SaveChangesAsync();
 
-                payment.TotalPrice = totalPrice;
-                await _context.SaveChangesAsync();
+            // Gán PaymentId cho tất cả lịch hẹn trong cùng gói
+            var relatedAppointments = await _context.Appointments
+                .Where(a => a.VaccinePackageId == appointment.VaccinePackageId
+                            && a.ChildrenId == appointment.ChildrenId)
+                .ToListAsync();
 
-                // Gán PaymentId cho tất cả lịch hẹn cùng gói & đứa trẻ này
-                var relatedAppointments = await _context.Appointments
-                    .Where(a => a.VaccinePackageId == appointment.VaccinePackageId
-                                && a.ChildrenId == appointment.ChildrenId)
-                    .ToListAsync();
+            foreach (var app in relatedAppointments)
+            {
+                app.PaymentId = paymentId;
+            }
 
-                foreach (var app in relatedAppointments)
-                {
-                    app.PaymentId = paymentId;
-                }
-                await _context.SaveChangesAsync();
-
-                return 3;
-            }         
+            await _context.SaveChangesAsync();
+            return 3; // Thành công
         }
+
 
         //Bước 3 -> 4
         public async Task<int> UpdatePaymentStatus(int appointmentId, string? paymentMethod)
