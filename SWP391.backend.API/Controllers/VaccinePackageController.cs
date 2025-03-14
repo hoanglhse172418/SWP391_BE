@@ -64,7 +64,7 @@ namespace SWP391.backend.api.Controllers
         [HttpGet("get-all")]
         public async Task<IActionResult> GetAllVaccinePackage()
         {
-            var packageList = await _vp.GetAllAsync();
+            var packageList = await _vp.GetAllVaccinePackageAsync();
             if (packageList == null)
                 return NotFound(new { message = "Vaccine package not found." });
             return Ok(packageList);

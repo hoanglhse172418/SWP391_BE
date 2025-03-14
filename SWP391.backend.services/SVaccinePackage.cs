@@ -55,7 +55,7 @@ namespace SWP391.backend.services
 
             foreach (var item in request.VaccinePackageItems)
             {
-                if (!vaccineData.TryGetValue(item.VaccineId, out var priceStr) || string.IsNullOrWhiteSpace(priceStr))
+                if (!vaccineData.TryGetValue(item.VaccineId ?? 0, out var priceStr) || string.IsNullOrWhiteSpace(priceStr))
                 {
                     throw new ArgumentException($"Vaccine with ID {item.VaccineId} not found or missing price.");
                 }
@@ -112,7 +112,7 @@ namespace SWP391.backend.services
 
             foreach (var item in request.VaccinePackageItems)
             {
-                if (!vaccineData.TryGetValue(item.VaccineId, out var priceStr) || string.IsNullOrWhiteSpace(priceStr))
+                if (!vaccineData.TryGetValue(item.VaccineId ?? 0, out var priceStr) || string.IsNullOrWhiteSpace(priceStr))
                 {
                     throw new ArgumentException($"Vaccine with ID {item.VaccineId} not found or missing price.");
                 }
@@ -149,12 +149,36 @@ namespace SWP391.backend.services
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<List<VaccinePackage?>> GetAllAsync()
+        public async Task<List<VaccinePackageDTO>> GetAllVaccinePackageAsync()
         {
             return await _swpContext.VaccinePackages
                 .Include(p => p.VaccinePackageItems)
+                .ThenInclude(i => i.Vaccine)
+                .Select(p => new VaccinePackageDTO
+                {
+                    Id = p.Id,
+                    Name = p.Name,                   
+                    Price = p.TotalPrice,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    VaccinePackageItems = p.VaccinePackageItems
+                        .Where(item => item.VaccineId.HasValue && item.DoseNumber.HasValue && item.PricePerDose.HasValue)
+                        .Select(item => new VaccinePackageItemDTO
+                        {
+                            VaccineId = item.VaccineId,
+                            VaccineName = item.Vaccine != null ? item.Vaccine.Name : "Unknown",
+                            DoseNumber = item.DoseNumber.Value,
+                            PricePerDose = item.PricePerDose
+                        })
+                        .ToList()
+                })
                 .ToListAsync();
         }
+
+
+
+
+
 
         public async Task<bool> DeleteVaccinePackageAsync(int id)
         {
