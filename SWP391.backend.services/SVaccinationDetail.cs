@@ -235,7 +235,7 @@ namespace SWP391.backend.services
                     DiseaseId = request.DiseaseId,
                     VaccineId = request.VaccineId,
                     ExpectedInjectionDate = expectedInjectionDate,
-                    ActualInjectionDate = DateTime.Now,
+                    ActualInjectionDate = DateTime.UtcNow.AddHours(7), // Nếu muốn lấy giờ Việt Nam (UTC+7)
                     Month = request.Month,
                 };
 
