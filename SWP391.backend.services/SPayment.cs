@@ -164,6 +164,32 @@ namespace SWP391.backend.services
             return decimal.Parse(appointment.Vaccine.Price);
         }
 
+        public async Task<List<PaymentDetailDTO>> GetAllPayments()
+        {
+             var payments = await _context.Payments.
+                Include(p => p.Appointments)
+                .Where(p => p.PaymentStatus == PaymentStatusEnum.Paid)
+                .Select(p => new PaymentDetailDTO
+                {
+                    PaymentId = p.Id,
+                    Type = p.Appointments.Select(a => a.Type).OrderByDescending(t => t).FirstOrDefault(),
+                    TotalPrice = p.TotalPrice,
+                    PaymentMethod = p.PaymentMethod,
+                    PaymentStatus = p.PaymentStatus,
+                    PackageProcessStatus = p.PackageProcessStatus,
+                    Items = p.PaymentDetails.Select(pd => new PaymentItemDTO
+                    {
+                        VaccineId = pd.VaccineId,
+                        VaccineName = pd.Vaccine.Name,
+                        DoseNumber = pd.DoseNumber,
+                        DoseRemaining = pd.DoseRemaining,
+                        PricePerDose = pd.PricePerDose
+                    }).ToList()
+                })
+                .ToListAsync();
+            return payments;
+        }
+
         public async Task<PaymentDetailDTO?> GetPaymentDetailByAppointmentIdAsync(int appointmentId)
         {
             var appointment = await _context.Appointments
