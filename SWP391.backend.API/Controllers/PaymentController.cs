@@ -14,6 +14,12 @@ namespace SWP391.backend.api.Controllers
             this.p = p;
         }
 
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAllPayments()
+        {
+            var payments = await this.p.GetAllPayments();
+            return Ok(payments);
+        }
 
         [HttpGet("details/{appointmentId}")]
         public async Task<IActionResult> GetPaymentDetailByAppointmentId(int appointmentId)
