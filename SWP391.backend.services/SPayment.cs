@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SWP391.backend.repository;
 using SWP391.backend.repository.DTO.Payment;
 using SWP391.backend.repository.Models;
+using SWP391.backend.repository.NewFolder;
 using SWP391.backend.repository.Utilities;
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,7 @@ namespace SWP391.backend.services
 
             if (existingPaymentId.HasValue && existingPaymentId > 0)
             {
+                appointment.ProcessStep = ProcessStepEnum.WaitingInject;
                 return 2; // Đã có payment, chỉ cần cập nhật status
             }
 
@@ -125,7 +127,7 @@ namespace SWP391.backend.services
 
             foreach (var app in relatedAppointments)
             {
-                app.PaymentId = paymentId;
+                app.PaymentId = paymentId;              
             }
 
             await _context.SaveChangesAsync();
