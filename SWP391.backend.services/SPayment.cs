@@ -164,15 +164,16 @@ namespace SWP391.backend.services
             return decimal.Parse(appointment.Vaccine.Price);
         }
 
-        public async Task<List<PaymentDetailDTO>> GetAllPayments()
+        public async Task<List<PaymentDetailDTO?>> GetAllPayments()
         {
-             var payments = await _context.Payments.
-                Include(p => p.Appointments)
-                .Where(p => p.PaymentStatus == PaymentStatusEnum.Paid)
+            //.Where(p => p.PaymentStatus == PaymentStatusEnum.Paid)
+            var payments = await _context.Payments
+                .Include(p => p.Appointments)
+                .Include(p => p.PaymentDetails)
                 .Select(p => new PaymentDetailDTO
                 {
                     PaymentId = p.Id,
-                    Type = p.Appointments.Select(a => a.Type).OrderByDescending(t => t).FirstOrDefault(),
+                    Type = p.Appointments.Select(a => a.Type).FirstOrDefault(),
                     TotalPrice = p.TotalPrice,
                     PaymentMethod = p.PaymentMethod,
                     PaymentStatus = p.PaymentStatus,
