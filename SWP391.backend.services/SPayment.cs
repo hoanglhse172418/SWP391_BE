@@ -203,6 +203,7 @@ namespace SWP391.backend.services
             return new PaymentDetailDTO
             {
                 PaymentId = appointment.Payment.Id,
+                Type = appointment.Type,
                 TotalPrice = appointment.Payment.TotalPrice,
                 PaymentMethod = appointment.Payment.PaymentMethod,
                 PaymentStatus = appointment.Payment.PaymentStatus,
@@ -221,6 +222,7 @@ namespace SWP391.backend.services
         public async Task<PaymentDetailDTO?> GetPaymentDetailByPaymentId(int paymentId)
         {
             var payment = await _context.Payments
+                .Include(p => p.Appointments)
                 .Include(p => p.PaymentDetails)
                 .ThenInclude(pd => pd.Vaccine)
                 .FirstOrDefaultAsync(p => p.Id == paymentId);
@@ -230,6 +232,7 @@ namespace SWP391.backend.services
             return new PaymentDetailDTO
             {
                 PaymentId = payment.Id,
+                Type = payment.Appointments.Select(a => a.Type).FirstOrDefault(),
                 TotalPrice = payment.TotalPrice,
                 PaymentMethod = payment.PaymentMethod,
                 PaymentStatus = payment.PaymentStatus,

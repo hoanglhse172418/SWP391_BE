@@ -148,6 +148,7 @@ namespace SWP391.backend.api.Controllers
                     payment.PaymentStatus = PaymentStatusEnum.Paid;
                     payment.TransactionId = transactionId;
                     payment.PaymentMethod = "VNPay";
+                    payment.PackageProcessStatus = "NotComplete";
                     context.Payments.Update(payment);
 
                     if (appointment != null)
