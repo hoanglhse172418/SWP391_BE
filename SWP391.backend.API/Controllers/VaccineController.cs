@@ -21,9 +21,9 @@ namespace SWP391.backend.api.Controllers
 
         [HttpGet]
         [Route("get-all")]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllDTO request)
+        public async Task<IActionResult> GetAll()
         {
-            var vaccineList = await v.GetAllVaccine(request);
+            var vaccineList = await v.GetAllVaccine();
             if (vaccineList == null || !vaccineList.Any())
             {
                 return NotFound();

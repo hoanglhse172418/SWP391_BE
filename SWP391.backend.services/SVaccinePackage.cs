@@ -78,13 +78,12 @@ namespace SWP391.backend.services
             await _swpContext.SaveChangesAsync();
 
             // Calculate total price based on doses
-            vaccinePackage.TotalPrice = packageItems.Sum(item => item.PricePerDose * item.DoseNumber);
+            vaccinePackage.TotalPrice = packageItems.Sum(item => item.PricePerDose.GetValueOrDefault() * item.DoseNumber.GetValueOrDefault()) * 1.1m;
             _swpContext.VaccinePackages.Update(vaccinePackage);
             await _swpContext.SaveChangesAsync();
 
             return vaccinePackage;
         }
-
 
         public async Task<VaccinePackage> UpdateVaccinePackageAsync(UpdateVaccinePackageDTO request)
         {
@@ -139,7 +138,6 @@ namespace SWP391.backend.services
             await _swpContext.SaveChangesAsync();
             return vaccinePackage;
         }
-
 
         public async Task<VaccinePackage?> GetVaccinePackageByIdAsync(int id)
         {

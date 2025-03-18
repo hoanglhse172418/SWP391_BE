@@ -11,7 +11,7 @@ namespace SWP391.backend.repository
 {
     public interface IVaccine
     {
-        Task<List<Vaccine>> GetAllVaccine(GetAllDTO request);
+        Task<List<Vaccine>> GetAllVaccine();
         Task<Vaccine> GetById(int id);
         Task<Vaccine> Create(CreateVaccineDTO request, string imageUrl);
         Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request, string imageUrl);
