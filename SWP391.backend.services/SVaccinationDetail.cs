@@ -324,7 +324,10 @@ namespace SWP391.backend.services
                 }
 
                 // Cập nhật ngày tiêm mong đợi cho lần tiêm hiện tại
-                vaccinationDetail.ExpectedInjectionDate = expectedDay.ToDateTime(TimeOnly.MinValue); ;
+                if (vaccinationDetail.Month == null || vaccinationDetail.Month == 0)
+                {
+                    vaccinationDetail.ExpectedInjectionDate = expectedDay.ToDateTime(TimeOnly.MinValue);
+                }
 
                 // Lưu thay đổi vào database
                 context.VaccinationDetails.Update(vaccinationDetail);
@@ -342,14 +345,16 @@ namespace SWP391.backend.services
                 {
                     if (vaccinations[i].Id == id)  // Tìm vị trí lần tiêm hiện tại
                     {
-                        // **Lần tiêm tiếp theo**
                         var nextVaccination = vaccinations[i + 1];
 
-                        // Giả sử khoảng cách giữa các lần tiêm là 2 tháng (có thể thay đổi)
-                        nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(1).ToDateTime(TimeOnly.MinValue); ;
-
-                        context.VaccinationDetails.Update(nextVaccination);
-                        await context.SaveChangesAsync();
+                        // Nếu nextVaccination.Month có giá trị, không cập nhật ExpectedInjectionDate
+                        if (nextVaccination.Month == null || nextVaccination.Month == 0)
+                        {
+                            // Giả sử khoảng cách giữa các lần tiêm là 1 tháng (có thể thay đổi)
+                            nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+                            context.VaccinationDetails.Update(nextVaccination);
+                            await context.SaveChangesAsync();
+                        }
                     }
                 }
 
