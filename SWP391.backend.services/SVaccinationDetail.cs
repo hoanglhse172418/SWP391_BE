@@ -346,7 +346,7 @@ namespace SWP391.backend.services
                         var nextVaccination = vaccinations[i + 1];
 
                         // Giả sử khoảng cách giữa các lần tiêm là 2 tháng (có thể thay đổi)
-                        nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(2).ToDateTime(TimeOnly.MinValue); ;
+                        nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(1).ToDateTime(TimeOnly.MinValue); ;
 
                         context.VaccinationDetails.Update(nextVaccination);
                         await context.SaveChangesAsync();
