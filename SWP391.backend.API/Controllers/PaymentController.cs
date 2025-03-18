@@ -44,7 +44,7 @@ namespace SWP391.backend.api.Controllers
         }
 
         //Gọi khi từ bước 3 sang 4
-        [HttpPut("update-status-payment-status/step-3-to-4")]
+        [HttpPut("update-status-payment-status/confirm-payment")]
         public async Task<IActionResult> UpdatePaymentStatus(int appointmentId, string? paymentMethod)
         {
             int result = await this.p.UpdatePaymentStatus(appointmentId, paymentMethod);
@@ -55,7 +55,7 @@ namespace SWP391.backend.api.Controllers
             }
             if(result == 1)
             {
-                return Ok("Payment was created ! Update appointment process");
+                return Ok("Payment was created before ! Update appointment process step to Waiting Inject");
             }
             return Ok("Payment status updated to Paid successfully.");
         }
