@@ -23,18 +23,24 @@ namespace SWP391.backend.services
             this.context = context;
         }
 
-        public async Task<List<Vaccine>> GetAllVaccine(GetAllDTO request)
+        public async Task<List<Vaccine>> GetAllVaccine()
         {
             try
             {
-                var vaccineList = await context.Vaccines.ToListAsync();
+                var vaccineList = await context.Vaccines
+                    .Include(v => v.Diseases) // Load danh sách Disease liên kết với Vaccine
+                    .OrderBy(v => v.Diseases.Min(d => d.Id)) // Sắp xếp theo Disease.Id tăng dần
+                    .ToListAsync();
+
                 return vaccineList;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
             }
         }
+
+
         public async Task<Vaccine> GetById(int id)
         {
             try

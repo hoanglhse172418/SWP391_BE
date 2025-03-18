@@ -251,7 +251,6 @@ namespace SWP391.backend.services
             }
         }
 
-
         public async Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request)
         {
             try
