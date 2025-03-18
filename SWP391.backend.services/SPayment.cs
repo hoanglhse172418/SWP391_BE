@@ -144,9 +144,10 @@ namespace SWP391.backend.services
 
             if (appointment == null || appointment.Payment == null) return 0;
 
-            if(appointment.Payment.PaymentStatus == PaymentStatusEnum.Paid)
+            if(appointment.PaymentId != null)
             {
                 appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+                await _context.SaveChangesAsync();
                 return 1;
             }
 
