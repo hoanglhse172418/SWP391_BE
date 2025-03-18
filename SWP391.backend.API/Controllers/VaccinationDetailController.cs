@@ -74,6 +74,22 @@ namespace SWP391.backend.api.Controllers
             }
         }
 
+        [HttpPut]
+        [Route("update-expected-date-by-doctor/{Id}")]
+
+        public async Task<IActionResult> UpdateExpectedDatebyDoctor(int Id, DateTime expectedDay)
+        {
+            try
+            {
+                var a = await this.vd.UpdateExpectedDatebyDoctor(Id, DateOnly.FromDateTime(expectedDay));
+                return Ok(a);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet]
         [Route("get-by-id/{Id}")]
         public async Task<IActionResult> GetById(int Id)
