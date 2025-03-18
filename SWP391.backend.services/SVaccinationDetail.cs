@@ -297,6 +297,75 @@ namespace SWP391.backend.services
             }
         }
 
+        public async Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay)
+        {
+            try
+            {
+                // Tìm chi tiết tiêm chủng theo ID
+                var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
+                if (vaccinationDetail == null)
+                {
+                    throw new Exception("Vaccination detail not found.");
+                }
+
+                // Tìm hồ sơ tiêm chủng
+                var vaccinationProfile = await context.VaccinationProfiles.FindAsync(vaccinationDetail.VaccinationProfileId);
+                if (vaccinationProfile == null)
+                {
+                    throw new Exception("Vaccination profile not found.");
+                }
+
+                // Lấy thông tin trẻ em
+                var child = await context.Children
+                    .FirstOrDefaultAsync(c => c.Id == vaccinationProfile.ChildrenId);
+                if (child == null || !child.Dob.HasValue)
+                {
+                    throw new Exception("Child not found or date of birth is missing.");
+                }
+
+                // Cập nhật ngày tiêm mong đợi cho lần tiêm hiện tại
+                if (vaccinationDetail.Month == null || vaccinationDetail.Month == 0)
+                {
+                    vaccinationDetail.ExpectedInjectionDate = expectedDay.ToDateTime(TimeOnly.MinValue);
+                }
+
+                // Lưu thay đổi vào database
+                context.VaccinationDetails.Update(vaccinationDetail);
+                await context.SaveChangesAsync();
+
+                // **Tìm tất cả các lần tiêm của cùng một bệnh trong hồ sơ này**
+                var vaccinations = await context.VaccinationDetails
+                    .Where(v => v.VaccinationProfileId == vaccinationProfile.Id &&
+                                v.DiseaseId == vaccinationDetail.DiseaseId)
+                    .OrderBy(v => v.ExpectedInjectionDate)
+                    .ToListAsync();
+
+                // **Cập nhật ExpectedInjectionDate cho các lần tiêm tiếp theo**
+                for (int i = 0; i < vaccinations.Count - 1; i++)
+                {
+                    if (vaccinations[i].Id == id)  // Tìm vị trí lần tiêm hiện tại
+                    {
+                        var nextVaccination = vaccinations[i + 1];
+
+                        // Nếu nextVaccination.Month có giá trị, không cập nhật ExpectedInjectionDate
+                        if (nextVaccination.Month == null || nextVaccination.Month == 0)
+                        {
+                            // Giả sử khoảng cách giữa các lần tiêm là 1 tháng (có thể thay đổi)
+                            nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+                            context.VaccinationDetails.Update(nextVaccination);
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                return vaccinationDetail;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
+            }
+        }
+
         public async Task<VaccinationDetail> GetById(int id)
         {
             try
