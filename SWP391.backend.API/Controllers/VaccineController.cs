@@ -32,6 +32,18 @@ namespace SWP391.backend.api.Controllers
         }
 
         [HttpGet]
+        [Route("get-all-for-user")]
+        public async Task<IActionResult> GetAllForUser()
+        {
+            var vaccineList = await v.GetAllVaccineForUser();
+            if (vaccineList == null || !vaccineList.Any())
+            {
+                return NotFound();
+            }
+            return Ok(vaccineList);
+        }
+
+        [HttpGet]
         [Route("get-by-id/{Id}")]
         public async Task<IActionResult> GetById(int Id)
         {
