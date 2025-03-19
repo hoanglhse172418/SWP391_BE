@@ -429,6 +429,7 @@ namespace SWP391.backend.services
                 appointment.RoomId = dto.RoomId;
                 appointment.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+                return 4;
             }         
         }
 
