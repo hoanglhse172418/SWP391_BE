@@ -301,7 +301,7 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<VaccinationDetail> UpdateForDoctor(int profileId, int vaccineId)
+        public async Task<List<VaccinationDetail>> UpdateForDoctor(int profileId, int vaccineId)
         {
             try
             {
@@ -317,48 +317,80 @@ namespace SWP391.backend.services
 
                 var diseaseIds = vaccine.Diseases.Select(d => d.Id).ToList(); // Lấy danh sách DiseaseId
 
-                // 2️⃣ Tìm tất cả các mũi tiêm của trẻ có cùng DiseaseId
+                // 2️⃣ Tìm tất cả các mũi tiêm của trẻ có liên quan đến các DiseaseId
                 var allVaccinationDetails = await context.VaccinationDetails
                     .Where(vd => vd.VaccinationProfileId == profileId && diseaseIds.Contains(vd.DiseaseId.Value))
-                    .OrderBy(vd => vd.Month) // Sắp xếp theo thứ tự tháng
+                    .OrderBy(vd => vd.DiseaseId) // Sắp xếp theo bệnh
+                    .ThenBy(vd => vd.Month) // Sắp xếp theo thứ tự tháng trong từng bệnh
                     .ToListAsync();
 
                 if (!allVaccinationDetails.Any())
                 {
-                    throw new Exception("No vaccination details found for this disease.");
+                    throw new Exception("No vaccination details found for these diseases.");
                 }
 
-                // 3️⃣ Lấy giá trị Month từ bảng Template
-                var template = await context.VaccineTemplates
-                    .FirstOrDefaultAsync(t => diseaseIds.Contains(t.DiseaseId.Value));
-                int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
+                List<VaccinationDetail> updatedDetails = new List<VaccinationDetail>();
 
-                // 4️⃣ Kiểm tra mũi đầu tiên đã có VaccineId chưa
-                var firstDose = allVaccinationDetails.FirstOrDefault();
-                if (firstDose != null && firstDose.VaccineId == null)
+                // 3️⃣ Duyệt từng DiseaseId để cập nhật hàng loạt
+                foreach (var diseaseId in diseaseIds)
                 {
-                    firstDose.VaccineId = vaccineId;
-                    firstDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
-                    firstDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template nếu có
+                    var diseaseVaccinationDetails = allVaccinationDetails
+                        .Where(vd => vd.DiseaseId == diseaseId)
+                        .ToList();
+
+                    if (!diseaseVaccinationDetails.Any()) continue;
+
+                    // Tìm mũi đầu tiên chưa có VaccineId
+                    var firstEmptyDose = diseaseVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
+
+                    if (firstEmptyDose != null)
+                    {
+                        // 4️⃣ Lấy giá trị Month từ bảng Template
+                        var template = await context.VaccineTemplates
+                            .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
+                        int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
+
+                        // Cập nhật VaccineId vào mũi tiêm trống đầu tiên
+                        firstEmptyDose.VaccineId = vaccineId;
+                        firstEmptyDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                        firstEmptyDose.Month = templateMonth;
+
+                        updatedDetails.Add(firstEmptyDose);
+                    }
+                    else
+                    {
+                        // Nếu tất cả mũi của Disease đã có VaccineId, cập nhật mũi tiếp theo
+                        var nextEmptyDose = diseaseVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
+                        if (nextEmptyDose == null)
+                        {
+                            throw new Exception($"All doses for Disease {diseaseId} have been assigned vaccines.");
+                        }
+
+                        // 5️⃣ Lấy giá trị Month từ bảng Template
+                        var template = await context.VaccineTemplates
+                            .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
+                        int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
+
+                        // Cập nhật mũi tiếp theo
+                        nextEmptyDose.VaccineId = vaccineId;
+                        nextEmptyDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                        nextEmptyDose.Month = templateMonth;
+
+                        updatedDetails.Add(nextEmptyDose);
+                    }
+                }
+
+                // 6️⃣ Lưu thay đổi vào database
+                if (updatedDetails.Any())
+                {
+                    await context.SaveChangesAsync();
                 }
                 else
                 {
-                    // Nếu mũi đầu tiên đã có VaccineId, tìm mũi tiếp theo chưa có VaccineId
-                    var nextDose = allVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
-                    if (nextDose == null)
-                    {
-                        throw new Exception("All doses have been assigned vaccines.");
-                    }
-
-                    nextDose.VaccineId = vaccineId;
-                    nextDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
-                    nextDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template nếu có
+                    throw new Exception("No updates were made. All vaccines have been assigned.");
                 }
 
-                // 5️⃣ Lưu thay đổi vào database
-                await context.SaveChangesAsync();
-
-                return firstDose ?? allVaccinationDetails.First(); // Trả về mũi đầu tiên hoặc mũi đã cập nhật
+                return updatedDetails; // Trả về danh sách mũi tiêm đã cập nhật
             }
             catch (Exception ex)
             {
