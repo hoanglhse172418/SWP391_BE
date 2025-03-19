@@ -366,7 +366,6 @@ namespace SWP391.backend.services
             }
         }
 
-
         public async Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay)
         {
             try
@@ -393,7 +392,7 @@ namespace SWP391.backend.services
                     throw new Exception("Child not found or date of birth is missing.");
                 }
 
-                // Cập nhật ngày tiêm mong đợi cho lần tiêm hiện tại
+                // **Cập nhật ngày tiêm mong đợi cho lần tiêm hiện tại**
                 if (vaccinationDetail.Month == null || vaccinationDetail.Month == 0)
                 {
                     vaccinationDetail.ExpectedInjectionDate = expectedDay.ToDateTime(TimeOnly.MinValue);
@@ -410,23 +409,32 @@ namespace SWP391.backend.services
                     .OrderBy(v => v.ExpectedInjectionDate)
                     .ToListAsync();
 
-                // **Cập nhật ExpectedInjectionDate cho các lần tiêm tiếp theo**
-                for (int i = 0; i < vaccinations.Count - 1; i++)
-                {
-                    if (vaccinations[i].Id == id)  // Tìm vị trí lần tiêm hiện tại
-                    {
-                        var nextVaccination = vaccinations[i + 1];
+                // **Cập nhật ExpectedInjectionDate cho tất cả các lần tiêm tiếp theo**
+                bool shouldUpdate = false;
+                DateOnly lastExpectedDate = expectedDay;
 
-                        // Nếu nextVaccination.Month có giá trị, không cập nhật ExpectedInjectionDate
-                        if (nextVaccination.Month == null || nextVaccination.Month == 0)
+                foreach (var v in vaccinations)
+                {
+                    if (v.Id == id)
+                    {
+                        shouldUpdate = true; // Bắt đầu cập nhật từ lần tiêm tiếp theo
+                        continue;
+                    }
+
+                    if (shouldUpdate)
+                    {
+                        // Nếu vaccine này có Month thì bỏ qua không cập nhật
+                        if (v.Month == null )
                         {
-                            // Giả sử khoảng cách giữa các lần tiêm là 1 tháng (có thể thay đổi)
-                            nextVaccination.ExpectedInjectionDate = expectedDay.AddMonths(1).ToDateTime(TimeOnly.MinValue);
-                            context.VaccinationDetails.Update(nextVaccination);
-                            await context.SaveChangesAsync();
+                            lastExpectedDate = lastExpectedDate.AddMonths(1); // Cộng thêm 1 tháng từ lần tiêm trước
+                            v.ExpectedInjectionDate = lastExpectedDate.ToDateTime(TimeOnly.MinValue);
+                            context.VaccinationDetails.Update(v);
                         }
                     }
                 }
+
+                // Lưu toàn bộ thay đổi
+                await context.SaveChangesAsync();
 
                 return vaccinationDetail;
             }
