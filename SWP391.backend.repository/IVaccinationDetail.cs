@@ -15,7 +15,7 @@ namespace SWP391.backend.repository
         Task<VaccinationDetail> Create(CreateVaccinationDetailDTO request);
         Task<VaccinationDetail> Createbydoctor(CreateVaccinationDetailDTO request);
         Task<VaccinationDetail> Update(int id, UpdateVaccinationDetailDTO request);
-        Task<VaccinationDetail> UpdateForDoctor(int ProfileId, int vaccineId);
+        Task<List<VaccinationDetail>> UpdateForDoctor(int ProfileId, int vaccineId);
         Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay);
         Task<VaccinationDetail> GetById(int id);
         Task<bool> Delete(int id);
