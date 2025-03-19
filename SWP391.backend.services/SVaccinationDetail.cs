@@ -301,24 +301,25 @@ namespace SWP391.backend.services
             }
         }
 
-        public async Task<VaccinationDetail> UpdateForDoctor(int ProfileId, int vaccineId)
+        public async Task<VaccinationDetail> UpdateForDoctor(int profileId, int vaccineId)
         {
             try
             {
-                // 1️⃣ Tìm một VaccinationDetail có VaccineId để lấy DiseaseId
-                var existingVaccination = await context.VaccinationDetails
-                    .FirstOrDefaultAsync(vd => vd.VaccineId == vaccineId);
+                // 1️⃣ Lấy danh sách DiseaseId từ VaccineId thông qua bảng DiseaseVaccine
+                var vaccine = await context.Vaccines
+                    .Include(v => v.Diseases) // Nạp danh sách bệnh liên kết với vaccine
+                    .FirstOrDefaultAsync(v => v.Id == vaccineId);
 
-                if (existingVaccination == null || !existingVaccination.DiseaseId.HasValue)
+                if (vaccine == null || !vaccine.Diseases.Any())
                 {
-                    throw new Exception("Cannot determine DiseaseId for the given VaccineId.");
+                    throw new Exception("No disease found for the given vaccine.");
                 }
 
-                int diseaseId = existingVaccination.DiseaseId.Value;
+                var diseaseIds = vaccine.Diseases.Select(d => d.Id).ToList(); // Lấy danh sách DiseaseId
 
                 // 2️⃣ Tìm tất cả các mũi tiêm của trẻ có cùng DiseaseId
                 var allVaccinationDetails = await context.VaccinationDetails
-                    .Where(vd => vd.VaccinationProfileId == ProfileId && vd.DiseaseId == diseaseId)
+                    .Where(vd => vd.VaccinationProfileId == profileId && diseaseIds.Contains(vd.DiseaseId.Value))
                     .OrderBy(vd => vd.Month) // Sắp xếp theo thứ tự tháng
                     .ToListAsync();
 
@@ -329,7 +330,7 @@ namespace SWP391.backend.services
 
                 // 3️⃣ Lấy giá trị Month từ bảng Template
                 var template = await context.VaccineTemplates
-                    .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
+                    .FirstOrDefaultAsync(t => diseaseIds.Contains(t.DiseaseId.Value));
                 int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
 
                 // 4️⃣ Kiểm tra mũi đầu tiên đã có VaccineId chưa
@@ -364,6 +365,7 @@ namespace SWP391.backend.services
                 throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
             }
         }
+
 
         public async Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay)
         {
