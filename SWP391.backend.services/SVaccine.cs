@@ -100,6 +100,7 @@ namespace SWP391.backend.services
             try
             {
                 var foundVaccine = await context.Vaccines.FindAsync(vaccineId);
+                string foundVaccineImg = foundVaccine.ImageUrl;
                 if(foundVaccine == null)
                 {
                     throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
@@ -108,7 +109,7 @@ namespace SWP391.backend.services
                 foundVaccine.Name = string.IsNullOrEmpty(request.VaccineName) ? foundVaccine.Name : request.VaccineName;
                 foundVaccine.Manufacture = string.IsNullOrEmpty(request.Manufacture) ? foundVaccine.Manufacture : request.Manufacture;
                 foundVaccine.Description = string.IsNullOrEmpty(request.Description) ? foundVaccine.Description : request.Description;
-                foundVaccine.ImageUrl = string.IsNullOrEmpty(imageUrl) ? foundVaccine.ImageUrl : imageUrl;
+                foundVaccine.ImageUrl = string.IsNullOrEmpty(imageUrl) ? foundVaccineImg : imageUrl;
                 foundVaccine.RecAgeStart = string.IsNullOrEmpty(request.RecAgeStart.ToString()) ? foundVaccine.RecAgeStart : request.RecAgeStart;
                 foundVaccine.RecAgeEnd = string.IsNullOrEmpty(request.RecAgeEnd.ToString()) ? foundVaccine.RecAgeEnd : request.RecAgeEnd;
                 foundVaccine.Notes = string.IsNullOrEmpty(request.Notes) ? foundVaccine.Notes : request.Notes;
