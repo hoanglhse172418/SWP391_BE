@@ -423,6 +423,10 @@ namespace SWP391.backend.services
 
             appointment.Status = AppointmentStatus.Processing;
             appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+            if (dto.VaccineId != null && dto.VaccineId > 0)
+            {
+                appointment.VaccineId = dto.VaccineId;
+            }
             appointment.DoctorId = dto.DoctorId;
             appointment.RoomId = dto.RoomId;
             appointment.UpdatedAt = DateTime.UtcNow;
