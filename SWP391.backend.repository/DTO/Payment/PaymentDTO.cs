@@ -26,5 +26,18 @@ namespace SWP391.backend.repository.DTO.Payment
         public decimal? PricePerDose { get; set; }
     }
 
+    public class PaymentDTOs
+    {
+        public int PaymentId { get; set; }
+        public string? Type { get; set; }
+        public int? VaccineId { get; set; }
+        public int? VaccinePackageId { get; set; }
+        public string? VaccineName { get; set; }
+        public string? PackageName { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? PaymentStatus { get; set; }
+        public string? PackageProcessStatus { get; set; }
+    }
 
 }

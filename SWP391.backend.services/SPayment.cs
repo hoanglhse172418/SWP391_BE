@@ -192,32 +192,29 @@ namespace SWP391.backend.services
             return payments;
         }
 
-        public async Task<PaymentDetailDTO?> GetPaymentDetailByAppointmentIdAsync(int appointmentId)
+        public async Task<PaymentDTOs?> GetPaymentDetailByAppointmentIdAsync(int appointmentId)
         {
             var appointment = await _context.Appointments
                 .Include(a => a.Payment)
-                .Include(a => a.Payment.PaymentDetails)
-                .ThenInclude(pd => pd.Vaccine)
+                .Include(a => a.Vaccine)           
+                .ThenInclude(a => a.VaccinePackageItems)   
+                .ThenInclude(a => a.VaccinePackage)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
             if (appointment == null || appointment.Payment == null) return null;
-
-            return new PaymentDetailDTO
+            
+            return new PaymentDTOs
             {
                 PaymentId = appointment.Payment.Id,
                 Type = appointment.Type,
+                VaccineId = appointment.VaccineId,
+                VaccineName = appointment.Vaccine?.Name,
+                VaccinePackageId = appointment.VaccinePackageId,
+                PackageName = appointment.VaccinePackage?.Name,
                 TotalPrice = appointment.Payment.TotalPrice,
                 PaymentMethod = appointment.Payment.PaymentMethod,
                 PaymentStatus = appointment.Payment.PaymentStatus,
                 PackageProcessStatus = appointment.Payment.PackageProcessStatus,
-                Items = appointment.Payment.PaymentDetails.Select(pd => new PaymentItemDTO
-                {
-                    VaccineId = pd.VaccineId,
-                    VaccineName = pd.Vaccine.Name,
-                    DoseNumber = pd.DoseNumber,
-                    DoseRemaining = pd.DoseRemaining,
-                    PricePerDose = pd.PricePerDose
-                }).ToList()
             };
         }
 
