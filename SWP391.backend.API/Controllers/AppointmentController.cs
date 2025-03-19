@@ -145,6 +145,7 @@ namespace SWP391.backend.api.Controllers
 
             return result switch
             {
+                -1 => Ok("This appointment already had payment. Update processStep for appointment to Waiting Inject"),
                 0 => NotFound("Appointment not found"),
                 1 => Ok("Updated appointment with Single type successfully!"),
                 2 => Ok("Payment already exists. Appointment with Package type updated successfully!"),
