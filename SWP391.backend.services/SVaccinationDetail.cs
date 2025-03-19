@@ -277,13 +277,18 @@ namespace SWP391.backend.services
                     throw new Exception("Child not found or date of birth is missing.");
                 }
 
-                // Cập nhật VaccineId nếu có
-                vaccinationDetail.VaccineId = request.VaccineId ?? vaccinationDetail.VaccineId;
+                // Cập nhật VaccineId nếu có và nếu nó chưa có giá trị trước đó
+                if (request.VaccineId.HasValue && vaccinationDetail.VaccineId == null)
+                {
+                    vaccinationDetail.VaccineId = request.VaccineId.Value;
+                }
 
-                // Chỉ cập nhật ActualInjectionDate (Không thay đổi ExpectedInjectionDate)
-                vaccinationDetail.ActualInjectionDate = child.Dob.Value.AddMonths(request.Month);
-
-                vaccinationDetail.Month = request.Month;
+                // Kiểm tra nếu Month thay đổi, thì mới cập nhật ActualInjectionDate
+                if (request.Month > 0 && request.Month != vaccinationDetail.Month)
+                {
+                    vaccinationDetail.ActualInjectionDate = child.Dob.Value.AddMonths(request.Month);
+                    vaccinationDetail.Month = request.Month;
+                }
 
                 // Lưu vào database
                 context.VaccinationDetails.Update(vaccinationDetail);
@@ -296,6 +301,7 @@ namespace SWP391.backend.services
                 throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
             }
         }
+
 
         public async Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay)
         {
