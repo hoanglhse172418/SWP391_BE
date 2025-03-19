@@ -75,12 +75,12 @@ namespace SWP391.backend.api.Controllers
         }
 
         [HttpPut]
-        [Route("update-vaccine-for-doctor/{Id}")]
-        public async Task<IActionResult> Updatefordoctor(int Id, int vaccineId)
+        [Route("update-vaccine-for-doctor")]
+        public async Task<IActionResult> Updatefordoctor(int ProfileId, int vaccineId)
         {
             try
             {
-                var a = await this.vd.UpdateForDoctor(Id, vaccineId);
+                var a = await this.vd.UpdateForDoctor(ProfileId, vaccineId);
                 return Ok(a);
             }
             catch (Exception ex)
