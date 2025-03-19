@@ -286,7 +286,6 @@ namespace SWP391.backend.services
                 // Kiểm tra nếu Month thay đổi, thì mới cập nhật ActualInjectionDate
                 if (request.Month > 0 && request.Month != vaccinationDetail.Month)
                 {
-                    vaccinationDetail.ActualInjectionDate = child.Dob.Value.AddMonths(request.Month);
                     vaccinationDetail.Month = request.Month;
                 }
 
@@ -302,6 +301,83 @@ namespace SWP391.backend.services
             }
         }
 
+        public async Task<VaccinationDetail> UpdateForDoctor(int id, int vaccineId)
+        {
+            try
+            {
+                // 1️⃣ Tìm chi tiết tiêm chủng theo ID
+                var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
+                if (vaccinationDetail == null)
+                {
+                    throw new Exception("Vaccination detail not found.");
+                }
+
+                // 2️⃣ Kiểm tra xem mũi tiêm có DiseaseId hay không
+                if (!vaccinationDetail.DiseaseId.HasValue)
+                {
+                    throw new Exception("This vaccination detail does not have an associated disease.");
+                }
+                int diseaseId = vaccinationDetail.DiseaseId.Value;
+
+                // 3️⃣ Tìm hồ sơ tiêm chủng của trẻ
+                var vaccinationProfile = await context.VaccinationProfiles.FindAsync(vaccinationDetail.VaccinationProfileId);
+                if (vaccinationProfile == null)
+                {
+                    throw new Exception("Vaccination profile not found.");
+                }
+
+                // 4️⃣ Lấy giá trị Month từ bảng Template
+                var template = await context.VaccineTemplates
+                    .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
+                if (template == null)
+                {
+                    throw new Exception("No template found for the given disease.");
+                }
+                int templateMonth = template.Month ?? 0; // Lấy giá trị Month từ bảng Template
+
+                // 5️⃣ Tìm tất cả các mũi tiêm của trẻ có cùng DiseaseId
+                var allVaccinationDetails = await context.VaccinationDetails
+                    .Where(vd => vd.VaccinationProfileId == vaccinationProfile.Id && vd.DiseaseId == diseaseId)
+                    .OrderBy(vd => vd.Month) // Sắp xếp theo mũi tiêm đầu tiên -> mũi tiếp theo
+                    .ToListAsync();
+
+                if (!allVaccinationDetails.Any())
+                {
+                    throw new Exception("No vaccination schedule found for this disease.");
+                }
+
+                // 6️⃣ Kiểm tra mũi đầu tiên đã có VaccineId chưa
+                var firstDose = allVaccinationDetails.FirstOrDefault();
+                if (firstDose != null && firstDose.VaccineId == null)
+                {
+                    firstDose.VaccineId = vaccineId;
+                    firstDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                    firstDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template
+                }
+                else
+                {
+                    // Nếu mũi đầu tiên đã có VaccineId, tìm mũi tiếp theo chưa có VaccineId
+                    var nextDose = allVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
+                    if (nextDose == null)
+                    {
+                        throw new Exception("All doses have been assigned vaccines.");
+                    }
+
+                    nextDose.VaccineId = vaccineId;
+                    nextDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                    nextDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template
+                }
+
+                // 7️⃣ Lưu vào database
+                await context.SaveChangesAsync();
+
+                return firstDose ?? allVaccinationDetails.First(); // Trả về mũi đầu tiên hoặc mũi đã cập nhật
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error updating vaccination detail: {ex.Message}", ex);
+            }
+        }
 
         public async Task<VaccinationDetail> UpdateExpectedDatebyDoctor(int id, DateOnly expectedDay)
         {
