@@ -75,8 +75,22 @@ namespace SWP391.backend.api.Controllers
         }
 
         [HttpPut]
-        [Route("update-expected-date-by-doctor/{Id}")]
+        [Route("update-vaccine-for-doctor/{Id}")]
+        public async Task<IActionResult> Updatefordoctor(int Id, int vaccineId)
+        {
+            try
+            {
+                var a = await this.vd.UpdateForDoctor(Id, vaccineId);
+                return Ok(a);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
+        [HttpPut]
+        [Route("update-expected-date-by-doctor/{Id}")]
         public async Task<IActionResult> UpdateExpectedDatebyDoctor(int Id, DateTime expectedDay)
         {
             try
