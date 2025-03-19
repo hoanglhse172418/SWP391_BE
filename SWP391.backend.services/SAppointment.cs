@@ -386,37 +386,50 @@ namespace SWP391.backend.services
             var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == appointmentId);
             if (appointment == null) return -1;
 
-            appointment.Status = AppointmentStatus.Processing;
-            appointment.ProcessStep = ProcessStepEnum.ConfirmInfo;
-
-            if (dto.VaccineId != null && dto.VaccineId > 0)
+            if(appointment.PaymentId == null)
             {
-                appointment.VaccineId = dto.VaccineId;
-            }
+                appointment.Status = AppointmentStatus.Processing;
+                appointment.ProcessStep = ProcessStepEnum.ConfirmInfo;
 
-            appointment.DoctorId = dto.DoctorId;
-            appointment.RoomId = dto.RoomId;
-            appointment.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            try
-            {
-                int paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
-
-                return paymentCreated switch
+                if (dto.VaccineId != null && dto.VaccineId > 0)
                 {
-                    0 => 0, //Không tìm thấy appointment
-                    1 => 1, //Tạo payment cho Lẻ
-                    2 => 2, //Đã có payment trong gói
-                    _ => 3  //Tạo payment mới cho gói
-                };
+                    appointment.VaccineId = dto.VaccineId;
+                }
+
+                appointment.DoctorId = dto.DoctorId;
+                appointment.RoomId = dto.RoomId;
+                appointment.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    int paymentCreated = await _payment.CreatePaymentForAppointment(appointmentId);
+
+                    return paymentCreated switch
+                    {
+                        0 => 0, //Không tìm thấy appointment
+                        1 => 1, //Tạo payment cho Lẻ
+                        2 => 2, //Đã có payment trong gói
+                        _ => 3  //Tạo payment mới cho gói
+                    };
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating payment: {ex.Message}");
+                    return -2; // Lỗi khi tạo payment
+                }
             }
-            catch (Exception ex)
-            {              
-                Console.WriteLine($"Error creating payment: {ex.Message}");
-                return -2; // Lỗi khi tạo payment
-            }
+
+            if(appointment.PaymentId != null)
+            {
+                appointment.Status = AppointmentStatus.Processing;
+                appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+                appointment.DoctorId = dto.DoctorId;
+                appointment.RoomId = dto.RoomId;
+                appointment.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }         
         }
 
 
