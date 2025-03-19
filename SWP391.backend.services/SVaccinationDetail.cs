@@ -305,9 +305,8 @@ namespace SWP391.backend.services
         {
             try
             {
-                // 1️⃣ Lấy danh sách DiseaseId từ VaccineId thông qua bảng DiseaseVaccine
                 var vaccine = await context.Vaccines
-                    .Include(v => v.Diseases) // Nạp danh sách bệnh liên kết với vaccine
+                    .Include(v => v.Diseases)
                     .FirstOrDefaultAsync(v => v.Id == vaccineId);
 
                 if (vaccine == null || !vaccine.Diseases.Any())
@@ -315,13 +314,12 @@ namespace SWP391.backend.services
                     throw new Exception("No disease found for the given vaccine.");
                 }
 
-                var diseaseIds = vaccine.Diseases.Select(d => d.Id).ToList(); // Lấy danh sách DiseaseId
+                var diseaseIds = vaccine.Diseases.Select(d => d.Id).ToList();
 
-                // 2️⃣ Tìm tất cả các mũi tiêm của trẻ có liên quan đến các DiseaseId
                 var allVaccinationDetails = await context.VaccinationDetails
                     .Where(vd => vd.VaccinationProfileId == profileId && diseaseIds.Contains(vd.DiseaseId.Value))
-                    .OrderBy(vd => vd.DiseaseId) // Sắp xếp theo bệnh
-                    .ThenBy(vd => vd.Month) // Sắp xếp theo thứ tự tháng trong từng bệnh
+                    .OrderBy(vd => vd.DiseaseId)
+                    .ThenBy(vd => vd.Month)
                     .ToListAsync();
 
                 if (!allVaccinationDetails.Any())
@@ -331,7 +329,6 @@ namespace SWP391.backend.services
 
                 List<VaccinationDetail> updatedDetails = new List<VaccinationDetail>();
 
-                // 3️⃣ Duyệt từng DiseaseId để cập nhật hàng loạt
                 foreach (var diseaseId in diseaseIds)
                 {
                     var diseaseVaccinationDetails = allVaccinationDetails
@@ -340,47 +337,51 @@ namespace SWP391.backend.services
 
                     if (!diseaseVaccinationDetails.Any()) continue;
 
-                    // Tìm mũi đầu tiên chưa có VaccineId
+                    // 🔍 1️⃣ Tìm mũi tiêm có VaccineId gần nhất
+                    var lastDoseWithVaccine = diseaseVaccinationDetails
+                        .Where(vd => vd.VaccineId != null)
+                        .OrderByDescending(vd => vd.Month)
+                        .FirstOrDefault();
+
+                    // 🔍 2️⃣ Lấy danh sách khoảng cách giữa các mũi từ Template
+                    var templateDoses = await context.VaccineTemplates
+                        .Where(t => t.DiseaseId == diseaseId)
+                        .OrderBy(t => t.Month)
+                        .ToListAsync();
+
+                    int nextMonth = 0;
+
+                    if (lastDoseWithVaccine != null)
+                    {
+                        // Nếu đã có mũi tiêm trước đó, tìm khoảng cách phù hợp từ template
+                        var nextTemplate = templateDoses
+                            .FirstOrDefault(t => t.Month > lastDoseWithVaccine.Month);
+
+                        if (nextTemplate != null)
+                        {
+                            nextMonth = nextTemplate.Month ?? 0;
+                        }
+                       
+                    }
+                    else
+                    {
+                        // Nếu chưa có mũi nào trước đó, lấy mũi tiêm đầu tiên trong template
+                        nextMonth = templateDoses.FirstOrDefault()?.Month ?? 0;
+                    }
+
+                    // 🔍 3️⃣ Tìm mũi đầu tiên chưa có VaccineId
                     var firstEmptyDose = diseaseVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
 
                     if (firstEmptyDose != null)
                     {
-                        // 4️⃣ Lấy giá trị Month từ bảng Template
-                        var template = await context.VaccineTemplates
-                            .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
-                        int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
-
-                        // Cập nhật VaccineId vào mũi tiêm trống đầu tiên
                         firstEmptyDose.VaccineId = vaccineId;
                         firstEmptyDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
-                        firstEmptyDose.Month = templateMonth;
+                        firstEmptyDose.Month = nextMonth; // Gán giá trị Month đã tính toán
 
                         updatedDetails.Add(firstEmptyDose);
                     }
-                    else
-                    {
-                        // Nếu tất cả mũi của Disease đã có VaccineId, cập nhật mũi tiếp theo
-                        var nextEmptyDose = diseaseVaccinationDetails.FirstOrDefault(vd => vd.VaccineId == null);
-                        if (nextEmptyDose == null)
-                        {
-                            throw new Exception($"All doses for Disease {diseaseId} have been assigned vaccines.");
-                        }
-
-                        // 5️⃣ Lấy giá trị Month từ bảng Template
-                        var template = await context.VaccineTemplates
-                            .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
-                        int templateMonth = template?.Month ?? 0; // Nếu không có template, để mặc định là 0
-
-                        // Cập nhật mũi tiếp theo
-                        nextEmptyDose.VaccineId = vaccineId;
-                        nextEmptyDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
-                        nextEmptyDose.Month = templateMonth;
-
-                        updatedDetails.Add(nextEmptyDose);
-                    }
                 }
 
-                // 6️⃣ Lưu thay đổi vào database
                 if (updatedDetails.Any())
                 {
                     await context.SaveChangesAsync();
@@ -390,7 +391,7 @@ namespace SWP391.backend.services
                     throw new Exception("No updates were made. All vaccines have been assigned.");
                 }
 
-                return updatedDetails; // Trả về danh sách mũi tiêm đã cập nhật
+                return updatedDetails;
             }
             catch (Exception ex)
             {
