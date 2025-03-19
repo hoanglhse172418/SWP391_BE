@@ -305,14 +305,14 @@ namespace SWP391.backend.services
         {
             try
             {
-                // 1️ Tìm chi tiết tiêm chủng theo ID
+                // 1️⃣ Tìm chi tiết tiêm chủng theo ID
                 var vaccinationDetail = await context.VaccinationDetails.FindAsync(id);
                 if (vaccinationDetail == null)
                 {
                     throw new Exception("Vaccination detail not found.");
                 }
 
-                // 2️ Kiểm tra xem mũi tiêm có DiseaseId hay không
+                // 2️⃣ Kiểm tra xem mũi tiêm có DiseaseId hay không
                 if (!vaccinationDetail.DiseaseId.HasValue)
                 {
                     throw new Exception("This vaccination detail does not have an associated disease.");
@@ -326,7 +326,16 @@ namespace SWP391.backend.services
                     throw new Exception("Vaccination profile not found.");
                 }
 
-                // 4️⃣ Tìm tất cả các mũi tiêm của trẻ có cùng DiseaseId
+                // 4️⃣ Lấy giá trị Month từ bảng Template
+                var template = await context.VaccineTemplates
+                    .FirstOrDefaultAsync(t => t.DiseaseId == diseaseId);
+                if (template == null)
+                {
+                    throw new Exception("No template found for the given disease.");
+                }
+                int templateMonth = template.Month ?? 0; // Lấy giá trị Month từ bảng Template
+
+                // 5️⃣ Tìm tất cả các mũi tiêm của trẻ có cùng DiseaseId
                 var allVaccinationDetails = await context.VaccinationDetails
                     .Where(vd => vd.VaccinationProfileId == vaccinationProfile.Id && vd.DiseaseId == diseaseId)
                     .OrderBy(vd => vd.Month) // Sắp xếp theo mũi tiêm đầu tiên -> mũi tiếp theo
@@ -337,12 +346,13 @@ namespace SWP391.backend.services
                     throw new Exception("No vaccination schedule found for this disease.");
                 }
 
-                // 5️⃣ Kiểm tra mũi đầu tiên đã có VaccineId chưa
+                // 6️⃣ Kiểm tra mũi đầu tiên đã có VaccineId chưa
                 var firstDose = allVaccinationDetails.FirstOrDefault();
                 if (firstDose != null && firstDose.VaccineId == null)
                 {
                     firstDose.VaccineId = vaccineId;
                     firstDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                    firstDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template
                 }
                 else
                 {
@@ -355,9 +365,10 @@ namespace SWP391.backend.services
 
                     nextDose.VaccineId = vaccineId;
                     nextDose.ActualInjectionDate = DateTime.UtcNow.AddHours(7);
+                    nextDose.Month = templateMonth; // Cập nhật giá trị tháng từ Template
                 }
 
-                // 6️⃣ Lưu vào database
+                // 7️⃣ Lưu vào database
                 await context.SaveChangesAsync();
 
                 return firstDose ?? allVaccinationDetails.First(); // Trả về mũi đầu tiên hoặc mũi đã cập nhật
