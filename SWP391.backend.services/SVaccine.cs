@@ -27,6 +27,21 @@ namespace SWP391.backend.services
         {
             try
             {
+                var vaccineList = await context.Vaccines                 
+                    .OrderBy(v => v.Id) // Sắp xếp theo Id của vaccine
+                    .ToListAsync();
+
+                return vaccineList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
+            }
+        }
+        public async Task<List<Vaccine>> GetAllVaccineForUser()
+        {
+            try
+            {
                 var vaccineList = await context.Vaccines
                     .Include(v => v.Diseases) // Load danh sách Disease liên kết với Vaccine
                     .OrderBy(v => v.Diseases.Min(d => d.Id)) // Sắp xếp theo Disease.Id tăng dần
