@@ -518,6 +518,13 @@ namespace SWP391.backend.services
                 appointment.Payment.PackageProcessStatus = "Completed";
             }
 
+            //Trừ số lượng của Vaccine đó ở trong kho khi đã xác nhận tiêm xong
+            var injectedVaccine = _context.Vaccines.FirstOrDefault(v => v.Id == appointment.VaccineId);
+            if (injectedVaccine != null) 
+            {
+                injectedVaccine.InStockNumber--;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
