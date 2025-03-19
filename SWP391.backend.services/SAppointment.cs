@@ -421,16 +421,13 @@ namespace SWP391.backend.services
                 }
             }
 
-            if(appointment.PaymentId != null)
-            {
-                appointment.Status = AppointmentStatus.Processing;
-                appointment.ProcessStep = ProcessStepEnum.WaitingInject;
-                appointment.DoctorId = dto.DoctorId;
-                appointment.RoomId = dto.RoomId;
-                appointment.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                return 4;
-            }         
+            appointment.Status = AppointmentStatus.Processing;
+            appointment.ProcessStep = ProcessStepEnum.WaitingInject;
+            appointment.DoctorId = dto.DoctorId;
+            appointment.RoomId = dto.RoomId;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return 4;
         }
 
 
