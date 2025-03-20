@@ -16,6 +16,7 @@ namespace SWP391.backend.repository.Models
         public decimal? TotalPrice { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public decimal Fee { get; set; }
 
         public virtual ICollection<Appointment> Appointments { get; set; }
         public virtual ICollection<VaccinePackageItem> VaccinePackageItems { get; set; }

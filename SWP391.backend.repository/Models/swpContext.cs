@@ -433,6 +433,10 @@ namespace SWP391.backend.repository.Models
                     .HasColumnName("created_at")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.Property(e => e.Fee)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasDefaultValueSql("((0.00))");
+
                 entity.Property(e => e.Name)
                     .HasMaxLength(255)
                     .HasColumnName("name");
