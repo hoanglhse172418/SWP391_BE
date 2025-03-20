@@ -155,7 +155,8 @@ namespace SWP391.backend.services
                 .Select(p => new VaccinePackageDTO
                 {
                     Id = p.Id,
-                    Name = p.Name,                   
+                    Name = p.Name,    
+                    Fee = p.Fee == 0 ? 10 : p.Fee,
                     Price = p.TotalPrice,
                     CreatedAt = p.CreatedAt,
                     UpdatedAt = p.UpdatedAt,
