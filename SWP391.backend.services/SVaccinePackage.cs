@@ -78,6 +78,7 @@ namespace SWP391.backend.services
             await _swpContext.SaveChangesAsync();
 
             // Calculate total price based on doses
+            vaccinePackage.Fee = packageItems.Sum(item => item.PricePerDose.GetValueOrDefault() * item.DoseNumber.GetValueOrDefault()) * 0.1m;
             vaccinePackage.TotalPrice = packageItems.Sum(item => item.PricePerDose.GetValueOrDefault() * item.DoseNumber.GetValueOrDefault()) * 1.1m;
             _swpContext.VaccinePackages.Update(vaccinePackage);
             await _swpContext.SaveChangesAsync();
@@ -156,7 +157,7 @@ namespace SWP391.backend.services
                 {
                     Id = p.Id,
                     Name = p.Name,    
-                    Fee = p.Fee == 0 ? 10 : p.Fee,
+                    Fee = p.Fee,
                     Price = p.TotalPrice,
                     CreatedAt = p.CreatedAt,
                     UpdatedAt = p.UpdatedAt,
