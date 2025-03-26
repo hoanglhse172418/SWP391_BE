@@ -57,7 +57,7 @@ namespace SWP391.backend.services
                 _context.PaymentDetails.Add(paymentDetail);
                 await _context.SaveChangesAsync();
 
-                payment.TotalPrice = paymentDetail.PricePerDose * paymentDetail.DoseNumber;
+                payment.TotalPrice = paymentDetail.PricePerDose * paymentDetail.DoseNumber * 1.1m;
                 await _context.SaveChangesAsync();
 
                 appointment.PaymentId = payment.Id;
@@ -116,7 +116,7 @@ namespace SWP391.backend.services
             _context.PaymentDetails.AddRange(packageItemDetails);
             await _context.SaveChangesAsync();
 
-            newPayment.TotalPrice = totalPrice;
+            newPayment.TotalPrice = totalPrice * 1.1m;
             await _context.SaveChangesAsync();
 
             // Gán PaymentId cho tất cả lịch hẹn trong cùng gói
