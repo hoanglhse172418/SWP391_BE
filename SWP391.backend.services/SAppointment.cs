@@ -298,7 +298,8 @@ namespace SWP391.backend.services
                         DateInjection = a.DateInjection,
                         Status = a.Status,
                         ProcessStep = a.ProcessStep,
-                        PaymentId = a.PaymentId
+                        PaymentId = a.PaymentId,
+                        InjectionNote = a.InjectionNote
                     }).ToList()
                 };
 
@@ -320,7 +321,8 @@ namespace SWP391.backend.services
                     DateInjection = a.DateInjection,
                     Status = a.Status ?? "Unknown",
                     ProcessStep = a.ProcessStep,
-                    PaymentId = a.PaymentId
+                    PaymentId = a.PaymentId,
+                    InjectionNote = a.InjectionNote
                 })
                 .ToList();
 
