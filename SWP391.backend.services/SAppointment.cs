@@ -411,7 +411,8 @@ namespace SWP391.backend.services
                         0 => 0, //Không tìm thấy appointment
                         1 => 1, //Tạo payment cho Lẻ
                         2 => 2, //Đã có payment trong gói
-                        _ => 3  //Tạo payment mới cho gói
+                        3 => 3,  //Tạo payment mới cho gói
+                        _ => -3 // Lỗi khi xử lý
                     };
                 }
                 catch (Exception ex)
