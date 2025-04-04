@@ -17,5 +17,6 @@ namespace SWP391.backend.repository.DTO.Vaccine
         public int? InStockNumber { get; set; }
         public string? Price { get; set; }
         public string? Notes { get; set; }
+        public List<int>? DiseaseIds { get; set; } // <-- Thêm dòng này
     }
 }

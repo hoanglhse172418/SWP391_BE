@@ -112,5 +112,27 @@ namespace SWP391.backend.api.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+        [HttpDelete]
+        [Route("delete/{Id}")]
+        public async Task<IActionResult> Delete(int Id)
+        {
+            try
+            {
+                var result = await v.Delete(Id);
+                if (result)
+                {
+                    return Ok("Delete successfully");
+                }
+                else
+                {
+                    return NotFound("Vaccine not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
