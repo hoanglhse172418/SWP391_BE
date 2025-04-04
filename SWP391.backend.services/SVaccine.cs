@@ -27,7 +27,7 @@ namespace SWP391.backend.services
         {
             try
             {
-                var vaccineList = await context.Vaccines                 
+                var vaccineList = await context.Vaccines
                     .OrderBy(v => v.Id) // Sắp xếp theo Id của vaccine
                     .ToListAsync();
 
@@ -38,6 +38,7 @@ namespace SWP391.backend.services
                 throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
             }
         }
+
         public async Task<List<Vaccine>> GetAllVaccineForUser()
         {
             try
@@ -55,7 +56,6 @@ namespace SWP391.backend.services
             }
         }
 
-
         public async Task<Vaccine> GetById(int id)
         {
             try
@@ -68,6 +68,7 @@ namespace SWP391.backend.services
                 throw new Exception($"Error get vaccine: {ex.Message}", ex);
             }
         }
+
         public async Task<Vaccine> Create(CreateVaccineDTO request, string imageUrl)
         {
             try
@@ -83,24 +84,44 @@ namespace SWP391.backend.services
                     InStockNumber = request.InStockNumber,
                     Price = request.Price,
                     Notes = request.Notes,
-                    CreatedAt = DateTime.UtcNow,
-                    //Id = int.Parse("V" + new Random().Next(1000, 9999))
+                    CreatedAt = DateTime.UtcNow
                 };
+
+                // Gán danh sách Disease nếu có
+                if (request.DiseaseIds != null && request.DiseaseIds.Any())
+                {
+                    var diseases = await context.Diseases
+                        .Where(d => request.DiseaseIds.Contains(d.Id))
+                        .ToListAsync();
+
+                    var missingIds = request.DiseaseIds.Except(diseases.Select(d => d.Id)).ToList();
+                    if (missingIds.Any())
+                    {
+                        throw new Exception($"Disease ID(s) not found: {string.Join(", ", missingIds)}");
+                    }
+
+                    newVaccine.Diseases = diseases;
+                }
+
                 context.Vaccines.Add(newVaccine);
                 await context.SaveChangesAsync();
                 return newVaccine;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error create vaccine: {ex.Message}", ex);
+                throw new Exception($"Error creating vaccine: {ex.Message}", ex);
             }
         }
+
         public async Task<Vaccine> Update(int vaccineId, UpdateVaccineDTO request, string imageUrl)
         {
             try
             {
-                var foundVaccine = await context.Vaccines.FindAsync(vaccineId);
-                if(foundVaccine == null)
+                var foundVaccine = await context.Vaccines
+                    .Include(v => v.Diseases)
+                    .FirstOrDefaultAsync(v => v.Id == vaccineId);
+
+                if (foundVaccine == null)
                 {
                     throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
                 }
@@ -109,19 +130,39 @@ namespace SWP391.backend.services
                 foundVaccine.Manufacture = string.IsNullOrEmpty(request.Manufacture) ? foundVaccine.Manufacture : request.Manufacture;
                 foundVaccine.Description = string.IsNullOrEmpty(request.Description) ? foundVaccine.Description : request.Description;
                 foundVaccine.ImageUrl = string.IsNullOrEmpty(imageUrl) ? foundVaccine.ImageUrl : imageUrl;
-                foundVaccine.RecAgeStart = string.IsNullOrEmpty(request.RecAgeStart.ToString()) ? foundVaccine.RecAgeStart : request.RecAgeStart;
-                foundVaccine.RecAgeEnd = string.IsNullOrEmpty(request.RecAgeEnd.ToString()) ? foundVaccine.RecAgeEnd : request.RecAgeEnd;
+                foundVaccine.RecAgeStart = request.RecAgeStart ?? foundVaccine.RecAgeStart;
+                foundVaccine.RecAgeEnd = request.RecAgeEnd ?? foundVaccine.RecAgeEnd;
                 foundVaccine.Notes = string.IsNullOrEmpty(request.Notes) ? foundVaccine.Notes : request.Notes;
-                foundVaccine.InStockNumber = string.IsNullOrEmpty(request.InStockNumber.ToString()) ? foundVaccine.InStockNumber : request.InStockNumber;
+                foundVaccine.InStockNumber = request.InStockNumber ?? foundVaccine.InStockNumber;
                 foundVaccine.Price = string.IsNullOrEmpty(request.Price) ? foundVaccine.Price : request.Price;
                 foundVaccine.UpdatedAt = DateTime.UtcNow;
+
+                // Cập nhật Disease nếu có
+                if (request.DiseaseIds != null)
+                {
+                    var diseases = await context.Diseases
+                        .Where(d => request.DiseaseIds.Contains(d.Id))
+                        .ToListAsync();
+
+                    var missingIds = request.DiseaseIds.Except(diseases.Select(d => d.Id)).ToList();
+                    if (missingIds.Any())
+                    {
+                        throw new Exception($"Disease ID(s) not found: {string.Join(", ", missingIds)}");
+                    }
+
+                    foundVaccine.Diseases.Clear();
+                    foreach (var disease in diseases)
+                    {
+                        foundVaccine.Diseases.Add(disease);
+                    }
+                }
 
                 await context.SaveChangesAsync();
                 return foundVaccine;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                throw new Exception($"Error update vaccine: {ex.Message}", ex);
+                throw new Exception($"Error updating vaccine: {ex.Message}", ex);
             }
         }
 
@@ -134,7 +175,7 @@ namespace SWP391.backend.services
                     .Include(d => d.Vaccines)
                     .FirstOrDefaultAsync(d => d.Name == diaseaseName);
 
-                
+
 
                 // Trả về danh sách vaccine hoặc danh sách rỗng nếu không tìm thấy disease
                 return disease?.Vaccines.ToList() ?? new List<Vaccine>();
@@ -142,6 +183,27 @@ namespace SWP391.backend.services
             catch (Exception ex)
             {
                 throw new Exception($"Error retrieving vaccines: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> Delete(int vaccineId)
+        {
+            try
+            {
+                var foundVaccine = await context.Vaccines
+                    .Include(v => v.Diseases)
+                    .FirstOrDefaultAsync(v => v.Id == vaccineId);
+                if (foundVaccine == null)
+                {
+                    throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
+                }
+                context.Vaccines.Remove(foundVaccine);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error deleting vaccine: {ex.Message}", ex);
             }
         }
     }
