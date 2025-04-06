@@ -28,7 +28,8 @@ namespace SWP391.backend.services
             try
             {
                 var vaccineList = await context.Vaccines
-                    .OrderBy(v => v.Id) // Sắp xếp theo Id của vaccine
+                    .Include(v => v.Diseases) // Bao gồm luôn danh sách disease liên kết
+                    .OrderBy(v => v.Id)
                     .ToListAsync();
 
                 return vaccineList;
