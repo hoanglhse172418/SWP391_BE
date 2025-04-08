@@ -173,15 +173,11 @@ namespace SWP391.backend.services
         {
             try
             {
-                // Tìm disease theo tên và lấy danh sách vaccine liên quan
-                var disease = await context.Diseases
-                    .Include(d => d.Vaccines)
-                    .FirstOrDefaultAsync(d => d.Name == diaseaseName);
+                var vaccines = await context.Vaccines
+                    .Where(v => v.Diseases.Any(d => d.Name.ToLower() == diaseaseName.ToLower()))
+                    .ToListAsync();
 
-
-
-                // Trả về danh sách vaccine hoặc danh sách rỗng nếu không tìm thấy disease
-                return disease?.Vaccines.ToList() ?? new List<Vaccine>();
+                return vaccines;
             }
             catch (Exception ex)
             {
