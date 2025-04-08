@@ -28,6 +28,7 @@ namespace SWP391.backend.services
             try
             {
                 var vaccineList = await context.Vaccines
+                    .Where(v => !v.IsDelete ) // Lọc các vaccine chưa bị xóa
                     .Include(v => v.Diseases) // Load diseases liên quan
                     .OrderBy(v => v.Diseases.Min(d => d.Id))
                     .ToListAsync();
@@ -193,14 +194,19 @@ namespace SWP391.backend.services
             try
             {
                 var foundVaccine = await context.Vaccines
-                    .Include(v => v.Diseases)
                     .FirstOrDefaultAsync(v => v.Id == vaccineId);
+
                 if (foundVaccine == null)
                 {
                     throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
                 }
-                context.Vaccines.Remove(foundVaccine);
+
+                // Soft delete: đánh dấu IsDelete = true
+                foundVaccine.IsDelete = true;
+
+                context.Vaccines.Update(foundVaccine);
                 await context.SaveChangesAsync();
+
                 return true;
             }
             catch (Exception ex)
