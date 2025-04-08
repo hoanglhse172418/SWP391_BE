@@ -28,7 +28,8 @@ namespace SWP391.backend.services
             try
             {
                 var vaccineList = await context.Vaccines
-                    .OrderBy(v => v.Id) // Sắp xếp theo Id của vaccine
+                    .Include(v => v.Diseases)
+                    .OrderBy(v => v.Diseases.Min(d => d.Id))
                     .ToListAsync();
 
                 return vaccineList;
@@ -44,8 +45,8 @@ namespace SWP391.backend.services
             try
             {
                 var vaccineList = await context.Vaccines
-                    .Include(v => v.Diseases) // Load danh sách Disease liên kết với Vaccine
-                    .OrderBy(v => v.Diseases.Min(d => d.Id)) // Sắp xếp theo Disease.Id tăng dần
+                    .Include(v => v.Diseases)
+                    .OrderBy(v => v.Diseases.Min(d => d.Id))
                     .ToListAsync();
 
                 return vaccineList;
