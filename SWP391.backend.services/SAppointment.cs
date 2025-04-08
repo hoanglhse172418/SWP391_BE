@@ -74,32 +74,90 @@ namespace SWP391.backend.services
             }
             else if (dto.VaccineType == "Package")
             {
-                // Lấy danh sách vắc xin trong gói
+                //// Lấy danh sách vắc xin trong gói
+                //var vaccineList = await _context.VaccinePackageItems
+                //    .Where(vp => vp.VaccinePackageId == dto.SelectedVaccinePackageId)
+                //    .Select(vp => vp.VaccineId)
+                //    .ToListAsync();
+
+                //if (!vaccineList.Any()) throw new ArgumentException("Vaccine package is empty or not found.");
+
+                //// Khởi tạo ngày tiêm bắt đầu
+                //DateTime injectionDate = dto.AppointmentDate;
+
+                //// Tạo lịch hẹn cho từng vắc xin trong gói
+                //foreach (var vaccineId in vaccineList)
+                //{
+                //    var appointment = new Appointment
+                //    {
+                //        ChildrenId = child.Id,
+                //        Name = dto.ContactFullName,
+                //        Phone = dto.ContactPhoneNumber,
+                //        Type = "Package",
+                //        DiseaseName = "N/A",
+                //        VaccineId = vaccineId,
+                //        VaccinePackageId = dto.SelectedVaccinePackageId,
+                //        RoomId = null,
+                //        DoctorId = null,
+                //        DateInjection = injectionDate, // Ngày tiêm của mũi hiện tại
+                //        Status = AppointmentStatus.Pending,
+                //        ProcessStep = ProcessStepEnum.Booked,
+                //        PaymentId = null,
+                //        InjectionNote = null,
+                //        CreatedAt = DateTime.UtcNow,
+                //        UpdatedAt = DateTime.UtcNow
+                //    };
+
+                //    appointments.Add(appointment);
+
+                //    // Cập nhật ngày tiêm cho mũi tiếp theo (cách 30 ngày)
+                //    injectionDate = injectionDate.AddDays(30);
+                //}
+
                 var vaccineList = await _context.VaccinePackageItems
                     .Where(vp => vp.VaccinePackageId == dto.SelectedVaccinePackageId)
-                    .Select(vp => vp.VaccineId)
+                    .Include(vp => vp.Vaccine)
                     .ToListAsync();
 
-                if (!vaccineList.Any()) throw new ArgumentException("Vaccine package is empty or not found.");
+                if (!vaccineList.Any())
+                    throw new ArgumentException("Vaccine package is empty or not found.");
 
-                // Khởi tạo ngày tiêm bắt đầu
-                DateTime injectionDate = dto.AppointmentDate;
+                // Lấy VaccinationProfile của trẻ
+                var profile = await _context.VaccinationProfiles
+                    .Include(p => p.VaccinationDetails)
+                    .FirstOrDefaultAsync(p => p.ChildrenId == child.Id);
 
-                // Tạo lịch hẹn cho từng vắc xin trong gói
-                foreach (var vaccineId in vaccineList)
+                if (profile == null)
+                    throw new ArgumentException("Child does not have a vaccination profile.");
+
+                foreach (var item in vaccineList)
                 {
+                    var vaccineId = item.VaccineId;
+
+                    // Lấy mũi tiêm tiếp theo chưa tiêm cho loại vaccine đó
+                    var nextDetail = profile.VaccinationDetails
+                        .Where(d => d.VaccineId == vaccineId && d.ActualInjectionDate == null)
+                        .OrderBy(d => d.ExpectedInjectionDate)
+                        .FirstOrDefault();
+
+                    if (nextDetail == null)
+                    {
+                        // Nếu không còn mũi nào chưa tiêm -> bỏ qua
+                        continue;
+                    }
+
                     var appointment = new Appointment
                     {
                         ChildrenId = child.Id,
                         Name = dto.ContactFullName,
                         Phone = dto.ContactPhoneNumber,
                         Type = "Package",
-                        DiseaseName = "N/A",
+                        DiseaseName = nextDetail.Disease?.Name ?? "N/A",
                         VaccineId = vaccineId,
                         VaccinePackageId = dto.SelectedVaccinePackageId,
                         RoomId = null,
                         DoctorId = null,
-                        DateInjection = injectionDate, // Ngày tiêm của mũi hiện tại
+                        DateInjection = nextDetail.ExpectedInjectionDate,
                         Status = AppointmentStatus.Pending,
                         ProcessStep = ProcessStepEnum.Booked,
                         PaymentId = null,
@@ -109,9 +167,6 @@ namespace SWP391.backend.services
                     };
 
                     appointments.Add(appointment);
-
-                    // Cập nhật ngày tiêm cho mũi tiếp theo (cách 30 ngày)
-                    injectionDate = injectionDate.AddDays(30);
                 }
             }
 
