@@ -29,7 +29,7 @@ namespace SWP391.backend.services
             {
                 var vaccineList = await context.Vaccines
                     .Include(v => v.Diseases) // Bao gồm luôn danh sách disease liên kết
-                    .OrderBy(v => v.Id)
+                    .OrderBy(v => v.Diseases.Min(d => d.Id))
                     .ToListAsync();
 
                 return vaccineList;
