@@ -134,7 +134,6 @@ namespace SWP391.backend.services
             return 3; // Thành công
         }
 
-
         //Bước 3 -> 4
         public async Task<int> UpdatePaymentStatus(int appointmentId, string? paymentMethod)
         {
