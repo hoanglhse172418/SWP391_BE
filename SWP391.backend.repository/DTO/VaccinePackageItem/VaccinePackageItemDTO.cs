@@ -10,6 +10,7 @@ namespace SWP391.backend.repository.DTO.VaccinePackageItem
     public class VaccinePackageItemDTO
     {
         public int? DiseaseId { get; set; }
+        public string? DiseaseName { get; set; }
         public int? VaccineId { get; set; }
         public string? VaccineName { get; set; }
         public int? DoseNumber { get; set; }
