@@ -68,6 +68,7 @@ namespace SWP391.backend.services
                 packageItems.Add(new VaccinePackageItem
                 {
                     VaccinePackageId = vaccinePackage.Id,
+                    DiseaseId = item.DiseaseId,
                     VaccineId = item.VaccineId,
                     DoseNumber = item.DoseNumber,
                     PricePerDose = pricePerDose
