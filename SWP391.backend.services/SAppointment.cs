@@ -335,7 +335,7 @@ namespace SWP391.backend.services
             // Nhóm lịch hẹn theo ChildrenId và VaccinePackageId
             var packageAppointments = appointments
                 .Where(a => a.VaccinePackageId.HasValue)
-                .GroupBy(a => new { a.ChildrenId, a.VaccinePackageId })
+                .GroupBy(a => new { a.ChildrenId, a.VaccinePackageId, a.CreatedAt })
                 .ToList();
 
             // Xử lý lịch hẹn gói vắc xin
