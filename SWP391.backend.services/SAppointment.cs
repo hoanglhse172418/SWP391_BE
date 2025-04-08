@@ -114,6 +114,7 @@ namespace SWP391.backend.services
                 //    injectionDate = injectionDate.AddDays(30);
                 //}
 
+                //Lấy tất cả vắc xin trong gói
                 var vaccineIds = await _context.VaccinePackageItems
                     .Where(vp => vp.VaccinePackageId == dto.SelectedVaccinePackageId)
                     .Select(vp => vp.VaccineId)
