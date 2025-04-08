@@ -114,37 +114,43 @@ namespace SWP391.backend.services
                 //    injectionDate = injectionDate.AddDays(30);
                 //}
 
-                var vaccineList = await _context.VaccinePackageItems
+                var vaccineIds = await _context.VaccinePackageItems
                     .Where(vp => vp.VaccinePackageId == dto.SelectedVaccinePackageId)
-                    .Include(vp => vp.Vaccine)
+                    .Select(vp => vp.VaccineId)
                     .ToListAsync();
 
-                if (!vaccineList.Any())
-                    throw new ArgumentException("Vaccine package is empty or not found.");
+                if (!vaccineIds.Any()) throw new ArgumentException("Vaccine package is empty or not found.");
 
-                // Lấy VaccinationProfile của trẻ
-                var profile = await _context.VaccinationProfiles
+                var vaccines = await _context.Vaccines
+                    .Include(v => v.Diseases)
+                    .Where(v => vaccineIds.Contains(v.Id))
+                    .ToListAsync();
+
+                // Lấy profile của trẻ
+                var vaccinationProfile = await _context.VaccinationProfiles
                     .Include(p => p.VaccinationDetails)
                     .FirstOrDefaultAsync(p => p.ChildrenId == child.Id);
 
-                if (profile == null)
-                    throw new ArgumentException("Child does not have a vaccination profile.");
+                if (vaccinationProfile == null) throw new Exception("Vaccination profile not found for child.");
 
-                foreach (var item in vaccineList)
+                foreach (var vaccine in vaccines)
                 {
-                    var vaccineId = item.VaccineId;
+                    var disease = vaccine.Diseases.FirstOrDefault();
+                    if (disease == null) continue;
 
-                    // Lấy mũi tiêm tiếp theo chưa tiêm cho loại vaccine đó
-                    var nextDetail = profile.VaccinationDetails
-                        .Where(d => d.VaccineId == vaccineId && d.ActualInjectionDate == null)
+                    var diseaseId = disease.Id;
+
+                    // Lấy tất cả các mũi cần tiêm cho bệnh đó
+                    var detailsForDisease = vaccinationProfile.VaccinationDetails
+                        .Where(d => d.DiseaseId == diseaseId)
                         .OrderBy(d => d.ExpectedInjectionDate)
-                        .FirstOrDefault();
+                        .ToList();
 
-                    if (nextDetail == null)
-                    {
-                        // Nếu không còn mũi nào chưa tiêm -> bỏ qua
-                        continue;
-                    }
+                    if (!detailsForDisease.Any()) continue;
+
+                    // Lấy mũi chưa tiêm
+                    var nextDose = detailsForDisease.FirstOrDefault(d => d.ActualInjectionDate == null);
+                    if (nextDose == null) continue; // Đã tiêm hết các mũi rồi
 
                     var appointment = new Appointment
                     {
@@ -152,12 +158,12 @@ namespace SWP391.backend.services
                         Name = dto.ContactFullName,
                         Phone = dto.ContactPhoneNumber,
                         Type = "Package",
-                        DiseaseName = nextDetail.Disease?.Name ?? "N/A",
-                        VaccineId = vaccineId,
+                        DiseaseName = disease.Name,
+                        VaccineId = vaccine.Id,
                         VaccinePackageId = dto.SelectedVaccinePackageId,
                         RoomId = null,
                         DoctorId = null,
-                        DateInjection = nextDetail.ExpectedInjectionDate,
+                        DateInjection = nextDose.ExpectedInjectionDate ?? dto.AppointmentDate,
                         Status = AppointmentStatus.Pending,
                         ProcessStep = ProcessStepEnum.Booked,
                         PaymentId = null,
