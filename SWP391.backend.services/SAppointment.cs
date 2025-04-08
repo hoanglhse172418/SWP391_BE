@@ -522,18 +522,32 @@ namespace SWP391.backend.services
             {
                 if (updatedDates.TryGetValue(appointment.Id, out DateTime newDate))
                 {
-                    appointment.DateInjection = newDate;
-                    appointment.UpdatedAt = DateTime.UtcNow;
+                    // Chỉ cho phép cập nhật nếu newDate >= DateInjection hiện tại
+                    if (appointment.DateInjection.HasValue && newDate >= appointment.DateInjection.Value)
+                    {
+                        appointment.DateInjection = newDate;
+                        appointment.UpdatedAt = DateTime.UtcNow;
+                    }
+                    // Nếu DateInjection chưa có (null), vẫn cho update
+                    else if (!appointment.DateInjection.HasValue)
+                    {
+                        appointment.DateInjection = newDate;
+                        appointment.UpdatedAt = DateTime.UtcNow;
+                    }
                 }
             }
 
             // Lấy danh sách PaymentId cần xử lý
-            var paymentIds = appointments.Where(a => a.PaymentId.HasValue).Select(a => a.PaymentId.Value).Distinct().ToList();
+            var paymentIds = appointments
+                .Where(a => a.PaymentId.HasValue)
+                .Select(a => a.PaymentId.Value)
+                .Distinct()
+                .ToList();
 
             // Lấy tất cả các lịch hẹn liên quan
             var relatedAppointments = await _context.Appointments
                 .Where(a => paymentIds.Contains(a.PaymentId.Value) && a.Status == "Pending")
-                .ToListAsync(); 
+                .ToListAsync();
 
             // Cập nhật lịch tiêm cho các mũi còn lại
             foreach (var paymentId in paymentIds)
@@ -541,7 +555,7 @@ namespace SWP391.backend.services
                 var orderedAppointments = relatedAppointments
                     .Where(a => a.PaymentId == paymentId)
                     .OrderBy(a => updatedDates.ContainsKey(a.Id) ? updatedDates[a.Id] : a.DateInjection)
-                    .ToList(); // Chuyển sang danh sách trong bộ nhớ trước khi xử lý
+                    .ToList();
 
                 DateTime? lastUpdatedDate = null;
 
@@ -563,6 +577,7 @@ namespace SWP391.backend.services
             await _context.SaveChangesAsync();
             return true;
         }
+
 
 
         //Bác sĩ gọi dùng update status sang Đã tiêm đồng thời trừ đi DoseRemaining trong PaymentDetail để theo dõi quá trình của Payment (nếu có gói)
