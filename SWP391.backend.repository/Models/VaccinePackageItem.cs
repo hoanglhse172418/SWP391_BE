@@ -10,6 +10,7 @@ namespace SWP391.backend.repository.Models
         public int? VaccinePackageId { get; set; }
         public int? DoseNumber { get; set; }
         public decimal? PricePerDose { get; set; }
+        public int? DiseaseId { get; set; }
 
         public virtual Vaccine? Vaccine { get; set; }
         public virtual VaccinePackage? VaccinePackage { get; set; }
