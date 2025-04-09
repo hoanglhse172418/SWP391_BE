@@ -124,7 +124,7 @@ namespace SWP391.backend.services
 
                 if (hasOngoingPackage)
                 {
-                    throw new InvalidOperationException("Trẻ hiện đang có một gói tiêm chủng chưa hoàn tất. Vui lòng hoàn tất hoặc huỷ gói hiện tại trước khi đặt thêm.");
+                    throw new InvalidOperationException("Trẻ hiện đang có lịch hẹn lẻ hay một gói tiêm chủng chưa hoàn tất. Vui lòng hoàn tất hoặc huỷ gói hiện tại trước khi đặt thêm.");
                 }
 
                 //Lấy tất cả vắc xin trong gói
