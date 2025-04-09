@@ -114,6 +114,19 @@ namespace SWP391.backend.services
                 //    injectionDate = injectionDate.AddDays(30);
                 //}
 
+                // Kiểm tra xem trẻ đã có bất kỳ gói vắc xin nào chưa hoàn tất không
+                var hasOngoingPackage = await _context.Appointments.AnyAsync(a =>
+                    a.ChildrenId == child.Id &&
+                    a.Type == "Package" &&
+                    a.Status != AppointmentStatus.Completed &&
+                    a.Status != AppointmentStatus.Canceled
+                );
+
+                if (hasOngoingPackage)
+                {
+                    throw new InvalidOperationException("Trẻ hiện đang có một gói tiêm chủng chưa hoàn tất. Vui lòng hoàn tất hoặc huỷ gói hiện tại trước khi đặt thêm.");
+                }
+
                 //Lấy tất cả vắc xin trong gói
                 var vaccineIds = await _context.VaccinePackageItems
                     .Where(vp => vp.VaccinePackageId == dto.SelectedVaccinePackageId)
