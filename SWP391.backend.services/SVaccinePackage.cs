@@ -68,6 +68,7 @@ namespace SWP391.backend.services
                 packageItems.Add(new VaccinePackageItem
                 {
                     VaccinePackageId = vaccinePackage.Id,
+                    DiseaseId = _swpContext.Diseases.Where(d => d.Name == item.DiseaseName).Select(d => d.Id).FirstOrDefault(),               
                     VaccineId = item.VaccineId,
                     DoseNumber = item.DoseNumber,
                     PricePerDose = pricePerDose
@@ -149,10 +150,11 @@ namespace SWP391.backend.services
         }
 
         public async Task<List<VaccinePackageDTO>> GetAllVaccinePackageAsync()
-        {
+        {          
             return await _swpContext.VaccinePackages
                 .Include(p => p.VaccinePackageItems)
-                .ThenInclude(i => i.Vaccine)
+                    .ThenInclude(i => i.Vaccine)
+                        .ThenInclude(d => d.Diseases)          
                 .Select(p => new VaccinePackageDTO
                 {
                     Id = p.Id,
@@ -165,6 +167,11 @@ namespace SWP391.backend.services
                         .Where(item => item.VaccineId.HasValue && item.DoseNumber.HasValue && item.PricePerDose.HasValue)
                         .Select(item => new VaccinePackageItemDTO
                         {
+                            DiseaseId = item.Id,
+                            DiseaseName = _swpContext.Diseases
+                                        .Where(d => d.Id == item.DiseaseId)
+                                        .Select(d => d.Name)
+                                        .FirstOrDefault() ?? "Unknown",
                             VaccineId = item.VaccineId,
                             VaccineName = item.Vaccine != null ? item.Vaccine.Name : "Unknown",
                             DoseNumber = item.DoseNumber.Value,

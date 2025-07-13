@@ -23,32 +23,34 @@ namespace SWP391.backend.services
             this.context = context;
         }
 
-        public async Task<List<Vaccine>> GetAllVaccine()
+        public async Task<List<VaccineDTO>> GetAllVaccine()
         {
             try
             {
                 var vaccineList = await context.Vaccines
-                    .OrderBy(v => v.Id) // Sắp xếp theo Id của vaccine
+                    .Where(v => !v.IsDelete ) // Lọc các vaccine chưa bị xóa
+                    .Include(v => v.Diseases) // Load diseases liên quan
+                    .OrderBy(v => v.Diseases.Min(d => d.Id))
                     .ToListAsync();
 
-                return vaccineList;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error fetching vaccine list: {ex.Message}", ex);
-            }
-        }
+                var result = vaccineList.Select(v => new VaccineDTO
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Manufacture = v.Manufacture,
+                    Description = v.Description,
+                    ImageUrl = v.ImageUrl,
+                    RecAgeStart = v.RecAgeStart,
+                    RecAgeEnd = v.RecAgeEnd,
+                    InStockNumber = v.InStockNumber,
+                    Notes = v.Notes,
+                    CreatedAt = v.CreatedAt,
+                    UpdatedAt = v.UpdatedAt,
+                    Price = v.Price,
+                    DiseaseIds = v.Diseases?.Select(d => d.Id).ToList() ?? new List<int>()
+                }).ToList();
 
-        public async Task<List<Vaccine>> GetAllVaccineForUser()
-        {
-            try
-            {
-                var vaccineList = await context.Vaccines
-                    .Include(v => v.Diseases) // Load danh sách Disease liên kết với Vaccine
-                    .OrderBy(v => v.Diseases.Min(d => d.Id)) // Sắp xếp theo Disease.Id tăng dần
-                    .ToListAsync();
-
-                return vaccineList;
+                return result;
             }
             catch (Exception ex)
             {
@@ -171,15 +173,11 @@ namespace SWP391.backend.services
         {
             try
             {
-                // Tìm disease theo tên và lấy danh sách vaccine liên quan
-                var disease = await context.Diseases
-                    .Include(d => d.Vaccines)
-                    .FirstOrDefaultAsync(d => d.Name == diaseaseName);
+                var vaccines = await context.Vaccines
+                    .Where(v => v.Diseases.Any(d => d.Name.ToLower() == diaseaseName.ToLower()))
+                    .ToListAsync();
 
-
-
-                // Trả về danh sách vaccine hoặc danh sách rỗng nếu không tìm thấy disease
-                return disease?.Vaccines.ToList() ?? new List<Vaccine>();
+                return vaccines;
             }
             catch (Exception ex)
             {
@@ -192,14 +190,19 @@ namespace SWP391.backend.services
             try
             {
                 var foundVaccine = await context.Vaccines
-                    .Include(v => v.Diseases)
                     .FirstOrDefaultAsync(v => v.Id == vaccineId);
+
                 if (foundVaccine == null)
                 {
                     throw new KeyNotFoundException($"Vaccine with ID: {vaccineId} not found");
                 }
-                context.Vaccines.Remove(foundVaccine);
+
+                // Soft delete: đánh dấu IsDelete = true
+                foundVaccine.IsDelete = true;
+
+                context.Vaccines.Update(foundVaccine);
                 await context.SaveChangesAsync();
+
                 return true;
             }
             catch (Exception ex)
